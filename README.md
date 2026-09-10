@@ -35,7 +35,6 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-
 # StudyFlow
 
 StudyFlow is a full-stack web application designed to help college students organize their courses, assignments, deadlines, and academic workload in one place.
@@ -44,4 +43,4 @@ StudyFlow is a full-stack web application designed to help college students orga
 
 - Jesus Eduardo Pinta Molina
 - Kevin Mbemba Kiyindou
-- 
+-
