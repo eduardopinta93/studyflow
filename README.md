@@ -43,4 +43,4 @@ StudyFlow is a full-stack web application designed to help college students orga
 
 - Jesus Eduardo Pinta Molina
 - Kevin Mbemba Kiyindou
--
+- kalungi Isaac
