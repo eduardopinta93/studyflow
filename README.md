@@ -1,46 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StudyFlow
+
+A student portal for organizing courses, tracking assignments, and managing deadlines.
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript
+- **Database:** PostgreSQL (Neon) via Prisma ORM
+- **Styling:** Tailwind CSS 4
+- **Auth:** NextAuth.js is to be in soon
+
+## Features
+
+- **Dashboard** — overview of enrolled courses, pending/completed assignments, upcoming deadlines, and a scratchpad to-do list. Auto-refreshes every 5 seconds.
+- **Courses** — full CRUD with search, sort, color-coded cards, course code, term, and notes.
+- **Assignments** — full CRUD with course linking, priority levels, type tags (assignment/exam/project/quiz), completion toggling, and filtering.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
+npx prisma generate
+npx prisma db push
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To seed sample data:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npx tsx scripts/seed.ts
+npx tsx scripts/seed-assignments.ts
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/
+  api/
+    courses/          # GET, POST
+    courses/[id]/     # GET, PATCH, DELETE
+    assignments/      # GET, POST
+    assignments/[id]/ # PATCH, DELETE
+  components/
+    Sidebar.tsx
+    dashboard/
+      StudyStats.tsx
+      QuickActions.tsx
+      UpcomingDeadlines.tsx
+      TodoList.tsx
+  courses/page.tsx
+  assignments/page.tsx
+  page.tsx            # Dashboard
+prisma/
+  schema.prisma       # User, Course, Assignment models
+lib/
+  db.ts               # Prisma client singleton
+scripts/
+  seed.ts             # Seed courses
+  seed-assignments.ts # Seed assignments
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Data Model
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**User** — id, name, email, password, createdAt, updatedAt
 
-## Deploy on Vercel
+**Course** — id, name, code, term, notes, color, userId, createdAt, updatedAt
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Assignment** — id, title, description, dueDate, completed, type, priority, courseId, userId, createdAt, updatedAt
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+One user has many courses. One course has many assignments. Each assignment belongs to one course and one user.
 
-# StudyFlow
-
-StudyFlow is a full-stack web application designed to help college students organize their courses, assignments, deadlines, and academic workload in one place.
-
-## Team Members
+## Team
 
 - Jesus Eduardo Pinta Molina
 - Kevin Mbemba Kiyindou
-- kalungi Isaac
+- Kalungi Isaac
