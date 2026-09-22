@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, ClipboardList, Menu, X } from 'lucide-react';
+import { Home, BookOpen, ClipboardList, Settings, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
   { label: 'Dashboard', href: '/', icon: Home },
   { label: 'Courses', href: '/courses', icon: BookOpen },
   { label: 'Assignments', href: '/assignments', icon: ClipboardList },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export default function Sidebar() {

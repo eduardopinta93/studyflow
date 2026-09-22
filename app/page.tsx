@@ -53,13 +53,13 @@ export default function Home() {
   return (
     <div className="flex min-h-screen bg-[var(--background)]">
       <Sidebar />
-      <main className="flex-1 lg:ml-64 p-6 lg:p-8">
+      <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-8 pt-12 lg:pt-0">
-            <h1 className="text-3xl font-bold text-[var(--foreground)]" style={{ fontFamily: 'var(--font-heading)' }}>
+          <div className="mb-6 sm:mb-8 pt-12 lg:pt-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--foreground)]" style={{ fontFamily: 'var(--font-heading)' }}>
               Dashboard
             </h1>
-            <p className="text-[var(--muted-foreground)] mt-1">
+            <p className="text-sm text-[var(--muted-foreground)] mt-1">
               {loading
                 ? 'Loading...'
                 : assignments.length === 0
@@ -80,11 +80,11 @@ export default function Home() {
             }}
           />
 
-          <div className="mt-6">
+          <div className="mt-5 sm:mt-6">
             <QuickActions />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 mt-5 sm:mt-6">
             <TodoList />
             <UpcomingDeadlines
               deadlines={pending.map((a) => ({
