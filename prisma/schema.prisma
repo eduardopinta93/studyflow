@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  password   String
+  major      String?
+  year       String?
+  studyGoal  String?
+  avatarUrl  String?
+  categoryId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category  StudyCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  courses     Course[]
+  assignments Assignment[]
+}
+
+model StudyCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String   @default("#4F46E5")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courseUnits CourseUnit[]
+  users       User[]
+}
+
+model CourseUnit {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  credits     Int
+  description String?
+  color       String?
+  categoryId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category    StudyCategory        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  assignments AssignmentTemplate[]
+
+  @@index([categoryId])
+}
+
+model AssignmentTemplate {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  content      String?
+  points       Int      @default(10)
+  dueInDays    Int
+  type         String   @default("assignment")
+  priority     String   @default("medium")
+  courseUnitId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  courseUnit CourseUnit @relation(fields: [courseUnitId], references: [id], onDelete: Cascade)
+
+  @@index([courseUnitId])
+}
+
+model Course {
+  id        String   @id @default(cuid())
+  name      String
+  code      String?
+  term      String?
+  notes     String?
+  color     String?  @default("#4F46E5")
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments Assignment[]
+}
+
+model Assignment {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  content     String?
+  points      Int      @default(10)
+  dueDate     DateTime
+  completed   Boolean  @default(false)
+  type        String   @default("assignment")
+  priority    String   @default("medium")
+  courseId    String
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
