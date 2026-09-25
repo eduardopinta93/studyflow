@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Plus, X, Edit2, Trash2, CheckCircle, ClipboardList, ArrowLeft } from 'lucide-react';
+import { Plus, X, Edit2, Trash2, ClipboardList, ArrowLeft, BookOpen, Check } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Link from 'next/link';
 
@@ -16,6 +16,8 @@ interface Assignment {
   id: string;
   title: string;
   description: string | null;
+  content: string | null;
+  points: number;
   dueDate: string;
   completed: boolean;
   type: string;
@@ -38,6 +40,14 @@ const priorityColors: Record<string, string> = {
 };
 
 export default function AssignmentsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[var(--background)]" />}>
+      <AssignmentsContent />
+    </Suspense>
+  );
+}
+
+function AssignmentsContent() {
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
 
@@ -46,10 +56,13 @@ export default function AssignmentsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [viewingAssignment, setViewingAssignment] = useState<Assignment | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    content: '',
+    points: 10,
     courseId: '',
     dueDate: '',
     type: 'assignment',
@@ -78,7 +91,7 @@ export default function AssignmentsPage() {
   }, [fetchData]);
 
   const resetForm = () => {
-    setFormData({ title: '', description: '', courseId: courseId || '', dueDate: '', type: 'assignment', priority: 'medium' });
+    setFormData({ title: '', description: '', content: '', points: 10, courseId: courseId || '', dueDate: '', type: 'assignment', priority: 'medium' });
     setEditingAssignment(null);
     setError('');
   };
@@ -92,6 +105,8 @@ export default function AssignmentsPage() {
     setFormData({
       title: a.title,
       description: a.description || '',
+      content: a.content || '',
+      points: a.points ?? 10,
       courseId: a.courseId,
       dueDate: new Date(a.dueDate).toISOString().split('T')[0],
       type: a.type,
@@ -116,7 +131,7 @@ export default function AssignmentsPage() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, points: Number(formData.points) || 10 }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -211,19 +226,41 @@ export default function AssignmentsPage() {
             <div className="space-y-2 sm:space-y-3">
               {filtered.map((a) => (
                 <div key={a.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-[var(--card)] border border-[var(--border)] rounded-xl sm:rounded-2xl hover:shadow-md transition-all">
-                  <button onClick={() => toggleComplete(a)} className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg border-2 flex items-center justify-center transition-all shrink-0 ${a.completed ? 'bg-[var(--success)] border-[var(--success)]' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
-                    {a.completed && <CheckCircle size={12} className="text-white" />}
+                  <button
+                    onClick={() => toggleComplete(a)}
+                    title={a.completed ? 'Mark as not done' : `Mark done and earn ${a.points} points`}
+                    className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
+                      a.completed
+                        ? 'bg-[var(--success)] border-[var(--success)] text-white'
+                        : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--success)] hover:text-[var(--success)]'
+                    }`}
+                  >
+                    {a.completed ? <Check size={12} /> : null}
+                    {a.completed ? 'Done' : 'Mark done'}
                   </button>
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium text-[var(--foreground)] ${a.completed ? 'line-through text-[var(--muted-foreground)]' : ''}`}>{a.title}</p>
                     <p className="text-xs text-[var(--muted-foreground)] truncate">{a.course.name}{a.course.code ? ` (${a.course.code})` : ''}</p>
                   </div>
+                  <span
+                    className={`text-xs font-bold px-2 py-1 rounded-lg shrink-0 ${
+                      a.completed
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                        : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+                    }`}
+                    title={a.completed ? `+${a.points} points earned` : `${a.points} points on completion`}
+                  >
+                    {a.completed ? `+${a.points}` : `${a.points} pts`}
+                  </span>
                   <div className="hidden sm:flex items-center gap-2 shrink-0">
                     <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${typeColors[a.type] || typeColors.assignment}`}>{a.type}</span>
                     <span className={`text-xs font-medium ${priorityColors[a.priority] || priorityColors.medium}`}>{a.priority}</span>
                   </div>
                   <p className="text-xs sm:text-sm text-[var(--muted-foreground)] shrink-0">{new Date(a.dueDate).toLocaleDateString()}</p>
                   <div className="flex gap-1 shrink-0">
+                    <button onClick={() => setViewingAssignment(a)} title="Lesson content" className="p-1.5 sm:p-2 hover:bg-[var(--muted)] rounded-lg text-[var(--muted-foreground)] transition-colors">
+                      <BookOpen size={14} />
+                    </button>
                     <button onClick={() => openEditModal(a)} className="p-1.5 sm:p-2 hover:bg-[var(--muted)] rounded-lg text-[var(--muted-foreground)] transition-colors">
                       <Edit2 size={14} />
                     </button>
@@ -262,10 +299,14 @@ export default function AssignmentsPage() {
                 <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors resize-none" placeholder="Optional description" rows={2} />
               </div>
               <div>
+                <label className="block text-sm font-medium mb-1.5">Lesson Content</label>
+                <textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors resize-none" placeholder="Lesson material for this assignment — concepts, steps, references" rows={4} />
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-1.5">Due Date <span className="text-[var(--destructive)]">*</span></label>
                 <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors" required />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Type</label>
                   <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors">
@@ -283,6 +324,10 @@ export default function AssignmentsPage() {
                     <option value="high">High</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">Points</label>
+                  <input type="number" min={1} max={100} value={formData.points} onChange={(e) => setFormData({ ...formData, points: Number(e.target.value) })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors" />
+                </div>
               </div>
               {error && <div className="px-3 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-[var(--destructive)] text-sm">{error}</div>}
               <div className="flex gap-3 pt-2">
@@ -292,6 +337,49 @@ export default function AssignmentsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {viewingAssignment && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50" onClick={() => setViewingAssignment(null)}>
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 w-full sm:max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${typeColors[viewingAssignment.type] || typeColors.assignment}`}>{viewingAssignment.type}</span>
+                  <span className="text-xs font-bold px-2 py-1 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)]">{viewingAssignment.points} pts</span>
+                  {viewingAssignment.completed && (
+                    <span className="text-xs font-bold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">+{viewingAssignment.points} earned</span>
+                  )}
+                </div>
+                <h2 className="text-lg sm:text-xl font-bold" style={{ fontFamily: 'var(--font-heading)' }}>{viewingAssignment.title}</h2>
+                <p className="text-xs text-[var(--muted-foreground)] mt-1">
+                  {viewingAssignment.course.name}{viewingAssignment.course.code ? ` (${viewingAssignment.course.code})` : ''} · due {new Date(viewingAssignment.dueDate).toLocaleDateString()}
+                </p>
+              </div>
+              <button onClick={() => setViewingAssignment(null)} className="p-2 hover:bg-[var(--muted)] rounded-xl text-[var(--muted-foreground)] transition-colors shrink-0">
+                <X size={18} />
+              </button>
+            </div>
+
+            {viewingAssignment.description && (
+              <p className="text-sm text-[var(--muted-foreground)] mb-4 pb-4 border-b border-[var(--border)]">{viewingAssignment.description}</p>
+            )}
+
+            <div className="flex items-center gap-2 mb-2">
+              <BookOpen size={15} className="text-[var(--accent)]" />
+              <span className="text-sm font-semibold">Lesson</span>
+            </div>
+            {viewingAssignment.content ? (
+              <div className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-line bg-[var(--background)] border border-[var(--border)] rounded-xl p-4">
+                {viewingAssignment.content}
+              </div>
+            ) : (
+              <p className="text-sm text-[var(--muted-foreground)] bg-[var(--background)] border border-[var(--border)] rounded-xl p-4">
+                No lesson content for this assignment yet. Add one via Edit.
+              </p>
+            )}
           </div>
         </div>
       )}

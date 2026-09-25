@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-const DEMO_USER_ID = 'demo-user';
+async function getUserId(): Promise<string | null> {
+  const session = await auth();
+  return session?.user?.id ?? null;
+}
 
 export async function GET() {
   try {
-    await db.user.upsert({
-      where: { id: DEMO_USER_ID },
-      update: {},
-      create: {
-        id: DEMO_USER_ID,
-        name: 'Student',
-        email: 'demo@studyflow.app',
-        password: 'demo',
-      },
-    });
+    const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const assignments = await db.assignment.findMany({
-      where: { userId: DEMO_USER_ID },
+      where: { userId },
       include: { course: true },
       orderBy: { dueDate: 'asc' },
     });
@@ -31,8 +29,13 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { title, description, dueDate, courseId, type, priority } = body;
+    const { title, description, content, points, dueDate, courseId, type, priority } = body;
 
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -46,19 +49,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Course is required' }, { status: 400 });
     }
 
-    await db.user.upsert({
-      where: { id: DEMO_USER_ID },
-      update: {},
-      create: {
-        id: DEMO_USER_ID,
-        name: 'Student',
-        email: 'demo@studyflow.app',
-        password: 'demo',
-      },
-    });
-
     const course = await db.course.findFirst({
-      where: { id: courseId, userId: DEMO_USER_ID },
+      where: { id: courseId, userId },
     });
 
     if (!course) {
@@ -69,9 +61,11 @@ export async function POST(request: NextRequest) {
       data: {
         title: title.trim(),
         description: description?.trim() || null,
+        content: typeof content === 'string' && content.trim() ? content.trim() : null,
+        points: Number.isFinite(Number(points)) && Number(points) > 0 ? Math.min(100, Math.round(Number(points))) : 10,
         dueDate: new Date(dueDate),
         courseId,
-        userId: DEMO_USER_ID,
+        userId,
         type: type || 'assignment',
         priority: priority || 'medium',
       },

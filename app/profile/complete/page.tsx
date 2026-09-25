@@ -1,12 +1,11 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GraduationCap, BookOpen, Target } from 'lucide-react';
+import ProfilePhotoField from '../../components/ProfilePhotoField';
 
 export default function CompleteProfilePage() {
-  const { data: session } = useSession();
   const router = useRouter();
   const [formData, setFormData] = useState({
     major: '',
@@ -15,6 +14,7 @@ export default function CompleteProfilePage() {
     avatarUrl: '',
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const majors = [
     'Computer Science', 'Software Engineering', 'Data Science', 'Information Technology',
@@ -30,12 +30,19 @@ export default function CompleteProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await fetch('/api/profile', {
+    setError('');
+    const response = await fetch('/api/profile', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData),
     });
-    router.push('/');
+    if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      setError(result?.error ?? 'Could not save your profile.');
+      setLoading(false);
+      return;
+    }
+    router.push('/onboarding');
   };
 
   return (
@@ -91,15 +98,16 @@ export default function CompleteProfilePage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-3 block">Profile photo URL (optional)</label>
-              <input type="url" value={formData.avatarUrl} onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })} className="w-full px-4 py-3 bg-[var(--background)] border-2 border-[var(--border)] rounded-xl focus:outline-none focus:border-[var(--accent)] transition-colors" placeholder="https://example.com/photo.jpg" />
+              <label className="text-sm font-medium mb-3 block">Profile photo (optional)</label>
+              <ProfilePhotoField value={formData.avatarUrl} onChange={(avatarUrl) => setFormData({ ...formData, avatarUrl })} disabled={loading} />
             </div>
 
+            {error && <p className="text-sm text-[var(--destructive)]" role="alert">{error}</p>}
             <button type="submit" disabled={loading} className="w-full py-3 bg-[var(--accent)] text-white rounded-xl font-medium hover:opacity-90 transition-all duration-200 disabled:opacity-50">
               {loading ? 'Saving...' : 'Complete Profile'}
             </button>
 
-            <button type="button" onClick={() => router.push('/')} className="w-full py-3 text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-medium transition-colors text-sm">
+            <button type="button" onClick={() => router.push('/onboarding')} className="w-full py-3 text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-medium transition-colors text-sm">
               Skip for now
             </button>
           </form>

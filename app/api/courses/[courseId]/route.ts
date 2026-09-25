@@ -1,16 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-const DEMO_USER_ID = 'demo-user';
+async function getUserId(): Promise<string | null> {
+  const session = await auth();
+  return session?.user?.id ?? null;
+}
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
+    const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { courseId } = await params;
     const course = await db.course.findFirst({
-      where: { id: courseId, userId: DEMO_USER_ID },
+      where: { id: courseId, userId },
       include: { assignments: { orderBy: { dueDate: 'asc' } } },
     });
 
@@ -30,12 +39,17 @@ export async function PATCH(
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
+    const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { courseId } = await params;
     const body = await request.json();
     const { name, code, term, notes, color } = body;
 
     const existing = await db.course.findFirst({
-      where: { id: courseId, userId: DEMO_USER_ID },
+      where: { id: courseId, userId },
     });
 
     if (!existing) {
@@ -65,10 +79,15 @@ export async function DELETE(
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
+    const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { courseId } = await params;
 
     const existing = await db.course.findFirst({
-      where: { id: courseId, userId: DEMO_USER_ID },
+      where: { id: courseId, userId },
     });
 
     if (!existing) {

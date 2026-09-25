@@ -1,38 +1,33 @@
 'use client';
 
 import Sidebar from './components/Sidebar';
-import TodoList from './components/dashboard/TodoList';
-import UpcomingDeadlines from './components/dashboard/UpcomingDeadlines';
-import StudyStats from './components/dashboard/StudyStats';
 import QuickActions from './components/dashboard/QuickActions';
 import { useState, useEffect, useCallback } from 'react';
-
-interface Assignment {
-  id: string;
-  title: string;
-  dueDate: string;
-  completed: boolean;
-  type: string;
-  course: { name: string };
-}
+import Link from 'next/link';
+import { BookOpen, Calendar, Hash, StickyNote } from 'lucide-react';
+import { getCourseImage } from '@/lib/course-image';
+import { GRADE_STYLES, type CourseGrade } from '@/lib/grade';
 
 interface Course {
   id: string;
+  name: string;
+  code: string | null;
+  term: string | null;
+  notes: string | null;
+  color: string;
+  createdAt: string;
+  _count?: { assignments: number };
+  grade: CourseGrade | null;
 }
 
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = useCallback(async () => {
+  const fetchCourses = useCallback(async () => {
     try {
-      const [c, a] = await Promise.all([
-        fetch('/api/courses'),
-        fetch('/api/assignments'),
-      ]);
-      if (c.ok) setCourses(await c.json());
-      if (a.ok) setAssignments(await a.json());
+      const res = await fetch('/api/courses');
+      if (res.ok) setCourses(await res.json());
     } catch {
       // silent
     } finally {
@@ -41,14 +36,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-    const i = setInterval(fetchData, 5000);
+    fetchCourses();
+    const i = setInterval(fetchCourses, 5000);
     return () => clearInterval(i);
-  }, [fetchData]);
-
-  const done = assignments.filter((a) => a.completed).length;
-  const pending = assignments.filter((a) => !a.completed);
-  const overdue = pending.filter((a) => new Date(a.dueDate).getTime() < Date.now());
+  }, [fetchCourses]);
 
   return (
     <div className="flex min-h-screen bg-[var(--background)]">
@@ -62,39 +53,97 @@ export default function Home() {
             <p className="text-sm text-[var(--muted-foreground)] mt-1">
               {loading
                 ? 'Loading...'
-                : assignments.length === 0
+                : courses.length === 0
                   ? 'Add a course to get started'
-                  : pending.length === 0
-                    ? 'All caught up. Great work!'
-                    : `${pending.length} assignment${pending.length !== 1 ? 's' : ''} on your plate${overdue.length > 0 ? `, ${overdue.length} overdue` : ''}`}
+                  : `${courses.length} course${courses.length !== 1 ? 's' : ''} on your dashboard`}
             </p>
           </div>
 
-          <StudyStats
-            stats={{
-              totalCourses: courses.length,
-              totalAssignments: assignments.length,
-              completedAssignments: done,
-              pendingAssignments: pending.length,
-              overdueCount: overdue.length,
-            }}
-          />
+          <QuickActions />
 
           <div className="mt-5 sm:mt-6">
-            <QuickActions />
-          </div>
+            {loading ? (
+              <div className="text-center py-20">
+                <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-[var(--muted-foreground)] mt-4 text-sm">Loading courses...</p>
+              </div>
+            ) : courses.length === 0 ? (
+              <div className="text-center py-16 sm:py-20 bg-[var(--card)] border border-[var(--border)] rounded-2xl px-4">
+                <BookOpen className="mx-auto text-[var(--muted-foreground)] mb-4" size={40} />
+                <h3 className="text-lg sm:text-xl font-bold text-[var(--foreground)] mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
+                  No courses yet
+                </h3>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Set up your studies or add a course using the buttons above.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {courses.map((course) => (
+                  <Link
+                    key={course.id}
+                    href={`/assignments?courseId=${course.id}`}
+                    className="bg-[var(--card)] border border-[var(--border)] rounded-xl sm:rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer"
+                  >
+                    <div className="relative h-32 sm:h-36 overflow-hidden">
+                      <img
+                        src={getCourseImage(course.code)}
+                        alt={course.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      <div className="absolute top-2 left-2">
+                        {course.code && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-black/40 backdrop-blur-sm rounded-md text-xs font-mono font-medium text-white">
+                            <Hash size={10} />
+                            {course.code}
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 mt-5 sm:mt-6">
-            <TodoList />
-            <UpcomingDeadlines
-              deadlines={pending.map((a) => ({
-                id: a.id,
-                title: a.title,
-                course: a.course.name,
-                dueDate: a.dueDate,
-                type: a.type as 'assignment' | 'exam' | 'project' | 'quiz',
-              }))}
-            />
+                    <div className="p-4">
+                      <h3 className="text-base font-bold text-[var(--foreground)] mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
+                        {course.name}
+                      </h3>
+
+                      {course.term && (
+                        <p className="text-xs text-[var(--muted-foreground)] flex items-center gap-1 mb-1">
+                          <Calendar size={10} /> {course.term}
+                        </p>
+                      )}
+
+                      {course.notes && (
+                        <p className="text-xs text-[var(--muted-foreground)] line-clamp-2 mt-1.5 flex items-start gap-1">
+                          <StickyNote size={10} className="mt-0.5 shrink-0" /> {course.notes}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-[var(--border)]">
+                        <span className="text-xs text-[var(--muted-foreground)]">
+                          {course._count?.assignments || 0} assignment{course._count?.assignments !== 1 ? 's' : ''}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {course.grade && (
+                            <span
+                              className={`text-xs font-bold px-2 py-0.5 rounded-lg ${GRADE_STYLES[course.grade.letter]}`}
+                              title={`Grade ${course.grade.letter} · ${course.grade.earned}/${course.grade.possible} pts · ${course.grade.percent}%`}
+                            >
+                              Grade {course.grade.letter}
+                            </span>
+                          )}
+                          <div
+                            className="w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm"
+                            style={{ backgroundColor: course.color }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>

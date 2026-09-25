@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Sidebar from '../components/Sidebar';
-import { Sun, Moon, Monitor, Bell, BellOff, Trash2, Download, User } from 'lucide-react';
+import ProfilePhotoField from '../components/ProfilePhotoField';
+import { Sun, Moon, Monitor, Bell, BellOff, Trash2, Download } from 'lucide-react';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -31,11 +33,15 @@ const themeOptions = [
 ];
 
 export default function SettingsPage() {
+  const { data: session, update: updateSession } = useSession();
   const [theme, setTheme] = useState<Theme>('dark');
   const [notifications, setNotifications] = useState(true);
   const [emailDigest, setEmailDigest] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
 
   useEffect(() => {
     const savedTheme = (localStorage.getItem('sf-theme') as Theme) || 'dark';
@@ -44,7 +50,39 @@ export default function SettingsPage() {
     setTheme(savedTheme);
     if (savedNotif !== null) setNotifications(savedNotif === 'true');
     if (savedDigest !== null) setEmailDigest(savedDigest === 'true');
+    fetch('/api/profile')
+      .then((response) => response.ok ? response.json() : null)
+      .then((result) => setAvatarUrl(result?.user?.avatarUrl ?? ''))
+      .catch(() => setAvatarError('Could not load your profile photo.'));
   }, []);
+
+  const handleAvatarChange = async (nextAvatarUrl: string) => {
+    const previousAvatarUrl = avatarUrl;
+    setAvatarUrl(nextAvatarUrl);
+    setAvatarSaving(true);
+    setAvatarError('');
+
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatarUrl: nextAvatarUrl || null }),
+      });
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        setAvatarUrl(previousAvatarUrl);
+        setAvatarError(result?.error ?? 'Could not update your profile photo.');
+      } else {
+        await updateSession();
+        triggerSave();
+      }
+    } catch {
+      setAvatarUrl(previousAvatarUrl);
+      setAvatarError('Could not update your profile photo.');
+    } finally {
+      setAvatarSaving(false);
+    }
+  };
 
   const applyTheme = (t: Theme) => {
     setTheme(t);
@@ -138,14 +176,17 @@ export default function SettingsPage() {
             <section className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-6">
               <h2 className="text-sm font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-4">Profile</h2>
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-[var(--accent)]/10 rounded-2xl flex items-center justify-center shrink-0">
-                  <User className="text-[var(--accent)]" size={24} />
-                </div>
+                <ProfilePhotoField value={avatarUrl} onChange={handleAvatarChange} disabled={avatarSaving} />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[var(--foreground)]">Student</p>
-                  <p className="text-sm text-[var(--muted-foreground)] truncate">demo@studyflow.app</p>
+                  <p className="font-medium text-[var(--foreground)]">
+                    {session?.user?.name ?? 'Student'}
+                  </p>
+                  <p className="text-sm text-[var(--muted-foreground)] truncate">
+                    {session?.user?.email ?? ''}
+                  </p>
                 </div>
               </div>
+              {avatarError && <p className="text-xs text-[var(--destructive)] mt-3" role="alert">{avatarError}</p>}
             </section>
 
             {/* Appearance */}

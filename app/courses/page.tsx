@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
+import CoursePickerModal from '../components/CoursePickerModal';
+import { getCourseImage } from '@/lib/course-image';
+import { GRADE_STYLES, type CourseGrade } from '@/lib/grade';
 
 interface Course {
   id: string;
@@ -27,6 +30,7 @@ interface Course {
   color: string;
   createdAt: string;
   _count?: { assignments: number };
+  grade: CourseGrade | null;
 }
 
 const COLOR_PRESETS = [
@@ -42,22 +46,12 @@ const COLOR_PRESETS = [
   '#F97316',
 ];
 
-const COURSE_IMAGES: Record<string, string> = {
-  CS: 'https://www.bu.edu/online/files/2025/05/MS-Computer-Info_Networks_banner-1200x500.jpg',
-  MATH: 'https://majorsdata.arizona.edu/sites/default/files/styles/az_trellis_800w_scale/public/2020-09/ua_science_mathematics_comprehensive_emphasis.jpg?itok=LeHM6XFn',
-};
-
-function getCourseImage(code: string | null, name: string) {
-  const prefix = code?.split(/[0-9]/)[0]?.toUpperCase() || '';
-  if (COURSE_IMAGES[prefix]) return COURSE_IMAGES[prefix];
-  return '/images/default-course.jpg';
-}
-
 export default function CoursesPage() {
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -97,8 +91,7 @@ export default function CoursesPage() {
   };
 
   const openAddModal = () => {
-    resetForm();
-    setShowModal(true);
+    setShowPicker(true);
   };
 
   const openEditModal = (course: Course) => {
@@ -115,6 +108,7 @@ export default function CoursesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingCourse) return;
     setSaving(true);
     setError('');
 
@@ -125,11 +119,8 @@ export default function CoursesPage() {
     }
 
     try {
-      const url = editingCourse ? `/api/courses/${editingCourse.id}` : '/api/courses';
-      const method = editingCourse ? 'PATCH' : 'POST';
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch(`/api/courses/${editingCourse.id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
@@ -260,7 +251,7 @@ export default function CoursesPage() {
                   {/* Course image */}
                   <div className="relative h-32 sm:h-36 overflow-hidden">
                     <img
-                      src={getCourseImage(course.code, course.name)}
+                      src={getCourseImage(course.code)}
                       alt={course.name}
                       className="w-full h-full object-cover"
                       loading="lazy"
@@ -314,10 +305,20 @@ export default function CoursesPage() {
                       <span className="text-xs text-[var(--muted-foreground)]">
                         {course._count?.assignments || 0} assignment{course._count?.assignments !== 1 ? 's' : ''}
                       </span>
-                      <div
-                        className="w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm"
-                        style={{ backgroundColor: course.color }}
-                      />
+                      <div className="flex items-center gap-2">
+                        {course.grade && (
+                          <span
+                            className={`text-xs font-bold px-2 py-0.5 rounded-lg ${GRADE_STYLES[course.grade.letter]}`}
+                            title={`Grade ${course.grade.letter} · ${course.grade.earned}/${course.grade.possible} pts · ${course.grade.percent}%`}
+                          >
+                            Grade {course.grade.letter}
+                          </span>
+                        )}
+                        <div
+                          className="w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: course.color }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -332,7 +333,7 @@ export default function CoursesPage() {
           <div className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 w-full sm:max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg sm:text-xl font-bold text-[var(--foreground)]" style={{ fontFamily: 'var(--font-heading)' }}>
-                {editingCourse ? 'Edit Course' : 'Add Course'}
+                Edit Course
               </h2>
               <button
                 onClick={() => { setShowModal(false); resetForm(); }}
@@ -437,13 +438,19 @@ export default function CoursesPage() {
                   ) : (
                     <Save size={14} />
                   )}
-                  {editingCourse ? 'Save Changes' : 'Add Course'}
+                  Save Changes
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      <CoursePickerModal
+        open={showPicker}
+        onClose={() => setShowPicker(false)}
+        onAdded={fetchCourses}
+      />
 
       {deletingId && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
