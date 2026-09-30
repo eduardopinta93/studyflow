@@ -1,27 +1,28 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
 
-import { prisma } from '@/lib/prisma';
-
-type RouteContext = {
-  params: Promise<{
-    courseId: string;
-  }>;
-};
-
-type UpdateCourseRequest = {
-  name?: unknown;
-  code?: unknown;
-  term?: unknown;
-  notes?: unknown;
-};
+async function getUserId(): Promise<string | null> {
+  const session = await auth();
+  return session?.user?.id ?? null;
+}
 
 function isValidObjectId(value: string) {
   return /^[0-9a-fA-F]{24}$/.test(value);
 }
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ courseId: string }> }
+) {
   try {
-    const { courseId } = await context.params;
+    const userId = await getUserId();
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { courseId } = await params;
 
     if (!isValidObjectId(courseId)) {
       return NextResponse.json(
@@ -30,30 +31,48 @@ export async function GET(_request: Request, context: RouteContext) {
       );
     }
 
-    const course = await prisma.course.findUnique({
+    const course = await db.course.findFirst({
       where: {
         id: courseId,
+        userId,
+      },
+      include: {
+        assignments: {
+          orderBy: { dueDate: 'asc' },
+        },
       },
     });
 
     if (!course) {
-      return NextResponse.json({ error: 'Course not found.' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Course not found.' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(course);
   } catch (error) {
-    console.error('Failed to retrieve course:', error);
+    console.error('GET /api/courses/[courseId] error:', error);
 
     return NextResponse.json(
-      { error: 'Failed to retrieve course.' },
+      { error: 'Failed to fetch course' },
       { status: 500 }
     );
   }
 }
 
-export async function PATCH(request: Request, context: RouteContext) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ courseId: string }> }
+) {
   try {
-    const { courseId } = await context.params;
+    const userId = await getUserId();
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { courseId } = await params;
 
     if (!isValidObjectId(courseId)) {
       return NextResponse.json(
@@ -62,17 +81,21 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
-    const existingCourse = await prisma.course.findUnique({
+    const existing = await db.course.findFirst({
       where: {
         id: courseId,
+        userId,
       },
     });
 
-    if (!existingCourse) {
-      return NextResponse.json({ error: 'Course not found.' }, { status: 404 });
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Course not found.' },
+        { status: 404 }
+      );
     }
 
-    const body = (await request.json()) as UpdateCourseRequest;
+    const body = await request.json();
 
     if (
       body.name !== undefined &&
@@ -84,12 +107,14 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
-    const course = await prisma.course.update({
+    const course = await db.course.update({
       where: {
         id: courseId,
       },
       data: {
-        ...(typeof body.name === 'string' && { name: body.name.trim() }),
+        ...(typeof body.name === 'string' && {
+          name: body.name.trim(),
+        }),
         ...(typeof body.code === 'string' && {
           code: body.code.trim() || null,
         }),
@@ -99,23 +124,35 @@ export async function PATCH(request: Request, context: RouteContext) {
         ...(typeof body.notes === 'string' && {
           notes: body.notes.trim() || null,
         }),
+        ...(typeof body.color === 'string' && {
+          color: body.color,
+        }),
       },
     });
 
     return NextResponse.json(course);
   } catch (error) {
-    console.error('Failed to update course:', error);
+    console.error('PATCH /api/courses/[courseId] error:', error);
 
     return NextResponse.json(
-      { error: 'Failed to update course.' },
+      { error: 'Failed to update course' },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ courseId: string }> }
+) {
   try {
-    const { courseId } = await context.params;
+    const userId = await getUserId();
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { courseId } = await params;
 
     if (!isValidObjectId(courseId)) {
       return NextResponse.json(
@@ -124,17 +161,21 @@ export async function DELETE(_request: Request, context: RouteContext) {
       );
     }
 
-    const existingCourse = await prisma.course.findUnique({
+    const existing = await db.course.findFirst({
       where: {
         id: courseId,
+        userId,
       },
     });
 
-    if (!existingCourse) {
-      return NextResponse.json({ error: 'Course not found.' }, { status: 404 });
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Course not found.' },
+        { status: 404 }
+      );
     }
 
-    await prisma.course.delete({
+    await db.course.delete({
       where: {
         id: courseId,
       },
@@ -144,10 +185,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
       message: 'Course deleted successfully.',
     });
   } catch (error) {
-    console.error('Failed to delete course:', error);
+    console.error('DELETE /api/courses/[courseId] error:', error);
 
     return NextResponse.json(
-      { error: 'Failed to delete course.' },
+      { error: 'Failed to delete course' },
       { status: 500 }
     );
   }
