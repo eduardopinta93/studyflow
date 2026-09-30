@@ -58,44 +58,58 @@ export async function POST(request: Request) {
     });
 
     const now = Date.now();
-    const result = await db.$transaction(
-      async (tx) => {
-        const courses = await tx.course.createManyAndReturn({
-          data: units.map((unit) => ({
-            name: unit.name,
-            code: unit.code,
-            term: category.name,
-            notes: unit.description,
-            color: unit.color ?? category.color,
-            userId,
-          })),
-        });
+const result = await db.$transaction(
+  async (tx) => {
+    const courses: Array<Awaited<ReturnType<typeof tx.course.create>>> = [];
 
-        const courseIdByUnit = new Map(units.map((unit, i) => [unit.id, courses[i].id]));
-        const assignmentData = templates
-          .filter((t) => courseIdByUnit.has(t.courseUnitId))
-          .map((t) => ({
-            title: t.title,
-            description: t.description,
-            content: t.content,
-            points: t.points,
-            dueDate: new Date(now + t.dueInDays * DAY_MS),
-            type: t.type,
-            priority: t.priority,
-            courseId: courseIdByUnit.get(t.courseUnitId)!,
-            userId,
-          }));
+    for (const unit of units) {
+      const course = await tx.course.create({
+        data: {
+          name: unit.name,
+          code: unit.code,
+          term: category.name,
+          notes: unit.description,
+          color: unit.color ?? category.color,
+          userId,
+        },
+      });
 
-        if (assignmentData.length > 0) {
-          await tx.assignment.createMany({ data: assignmentData });
-        }
+      courses.push(course);
+    }
 
-        await tx.user.update({ where: { id: userId }, data: { categoryId } });
+    const courseIdByUnit = new Map<string, string>();
 
-        return { courses, assignmentCount: assignmentData.length };
-      },
-      { timeout: 30_000 }
-    );
+for (let i = 0; i < units.length; i++) {
+  courseIdByUnit.set(units[i].id, courses[i].id);
+}
+
+    const assignmentData = templates
+      .filter((t) => courseIdByUnit.has(t.courseUnitId))
+      .map((t) => ({
+        title: t.title,
+        description: t.description,
+        content: t.content,
+        points: t.points,
+        dueDate: new Date(now + t.dueInDays * DAY_MS),
+        type: t.type,
+        priority: t.priority,
+        courseId: courseIdByUnit.get(t.courseUnitId)!,
+        userId,
+      }));
+
+    if (assignmentData.length > 0) {
+      await tx.assignment.createMany({ data: assignmentData });
+    }
+
+    await tx.user.update({
+      where: { id: userId },
+      data: { categoryId },
+    });
+
+    return { courses, assignmentCount: assignmentData.length };
+  },
+  { timeout: 30_000 }
+);
 
     return NextResponse.json(
       {
