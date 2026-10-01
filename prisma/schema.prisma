@@ -23,6 +23,8 @@ model User {
   category    StudyCategory? @relation(fields: [categoryId], references: [id])
   courses     Course[]
   assignments Assignment[]
+  sentMessages     Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageRecipient")
 }
 
 model StudyCategory {
@@ -100,4 +102,22 @@ model Assignment {
 
   course Course @relation(fields: [courseId], references: [id])
   user   User   @relation(fields: [userId], references: [id])
+}
+
+model Message {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  subject     String
+  body        String
+  senderId    String?  @db.ObjectId
+  senderName  String   @default("Instructor")
+  recipientId String   @db.ObjectId
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sender    User? @relation("MessageSender", fields: [senderId], references: [id])
+  recipient User  @relation("MessageRecipient", fields: [recipientId], references: [id])
+
+  @@index([recipientId])
+  @@index([senderId])
 }
