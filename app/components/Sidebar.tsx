@@ -1,23 +1,52 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { Home, BookOpen, ClipboardList, ListTodo, Settings, Menu, X, LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { Home, BookOpen, ClipboardList, ListTodo, Mail, Settings, Menu, X, LogOut } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import QuickAddFab from './QuickAddFab';
 
 const navItems = [
   { label: 'Dashboard', href: '/', icon: Home },
   { label: 'Courses', href: '/courses', icon: BookOpen },
   { label: 'Assignments', href: '/assignments', icon: ClipboardList },
   { label: 'To-dos', href: '/todos', icon: ListTodo },
+  { label: 'Inbox', href: '/inbox', icon: Mail },
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
   const { data: session } = useSession();
+
+  useEffect(() => {
+    if (!session?.user) return;
+
+    let cancelled = false;
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch('/api/messages');
+        if (!res.ok) return;
+        const messages = await res.json();
+        if (!cancelled && Array.isArray(messages)) {
+          setUnread(messages.filter((m: { read: boolean }) => !m.read).length);
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [session?.user, pathname]);
 
   return (
     <>
@@ -42,9 +71,7 @@ export default function Sidebar() {
         }`}
       >
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-[var(--border)]">
-          <div className="w-8 h-8 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white text-xs font-bold">
-            SF
-          </div>
+          <Image src="/logo.png" alt="" width={32} height={32} className="w-8 h-8 rounded-lg" />
           <span className="text-base font-bold text-[var(--foreground)] tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
             StudyFlow
           </span>
@@ -66,6 +93,11 @@ export default function Sidebar() {
               >
                 <item.icon size={16} />
                 {item.label}
+                {item.href === '/inbox' && unread > 0 && (
+                  <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-[var(--accent)] text-white text-[10px] font-bold flex items-center justify-center">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -73,7 +105,12 @@ export default function Sidebar() {
 
         {session?.user && (
           <div className="p-3 border-t border-[var(--border)]">
-            <div className="flex items-center gap-3 px-3 py-2 mb-1 min-w-0">
+            <Link
+              href="/profile"
+              onClick={() => setOpen(false)}
+              title="View profile"
+              className="flex items-center gap-3 px-3 py-2 mb-1 min-w-0 rounded-lg hover:bg-[var(--muted)] transition-colors"
+            >
               <div className="w-9 h-9 rounded-full overflow-hidden bg-[var(--accent)]/10 flex items-center justify-center shrink-0">
                 {session.user.avatarUrl ? (
                   <img src={session.user.avatarUrl} alt="" className="w-full h-full object-cover" />
@@ -91,7 +128,7 @@ export default function Sidebar() {
                   {session.user.email}
                 </p>
               </div>
-            </div>
+            </Link>
             <button
               onClick={() => signOut({ redirectTo: '/auth/login' })}
               className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
@@ -102,6 +139,8 @@ export default function Sidebar() {
           </div>
         )}
       </aside>
+
+      <QuickAddFab />
     </>
   );
 }

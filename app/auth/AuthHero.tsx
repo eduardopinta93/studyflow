@@ -85,12 +85,18 @@ export default function AuthHero({ tagline }: { tagline: string }) {
 
         <Tagline text={tagline} delay={0.35} />
 
-        <ul className="mx-auto mt-9 w-fit space-y-3 text-left">
+        <ul
+          className="feature-stage relative mx-auto mt-9 h-[50px] w-[330px] max-w-full"
+          style={rise(0.5)}
+        >
           {HIGHLIGHTS.map(({ icon: Icon, text }, idx) => (
             <li
               key={text}
-              className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 backdrop-blur-sm"
-              style={rise(0.5 + idx * 0.1)}
+              className="feature-run absolute inset-x-0 mx-auto flex w-fit items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 backdrop-blur-sm"
+              style={{
+                animation: 'feature-run 9s ease-in-out infinite both',
+                animationDelay: `${0.6 + idx * 3}s`,
+              }}
             >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15">
                 <Icon size={14} className="text-white" />

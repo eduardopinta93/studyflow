@@ -101,6 +101,14 @@ function AssignmentsContent() {
     setShowModal(true);
   };
 
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      openAddModal();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const openEditModal = (a: Assignment) => {
     setFormData({
       title: a.title,

@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id         String   @id @default(cuid())
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
   name       String
   email      String   @unique
   password   String
@@ -16,18 +16,19 @@ model User {
   year       String?
   studyGoal  String?
   avatarUrl  String?
-  categoryId String?
+  categoryId String?  @db.ObjectId
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  category  StudyCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
+  category    StudyCategory? @relation(fields: [categoryId], references: [id])
   courses     Course[]
   assignments Assignment[]
+  sentMessages     Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageRecipient")
 }
 
 model StudyCategory {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
   description String?
   color       String   @default("#4F46E5")
@@ -39,24 +40,22 @@ model StudyCategory {
 }
 
 model CourseUnit {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   code        String   @unique
   name        String
   credits     Int
   description String?
   color       String?
-  categoryId  String
+  categoryId  String   @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  category    StudyCategory        @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category    StudyCategory        @relation(fields: [categoryId], references: [id])
   assignments AssignmentTemplate[]
-
-  @@index([categoryId])
 }
 
 model AssignmentTemplate {
-  id           String   @id @default(cuid())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   title        String
   description  String?
   content      String?
@@ -64,32 +63,30 @@ model AssignmentTemplate {
   dueInDays    Int
   type         String   @default("assignment")
   priority     String   @default("medium")
-  courseUnitId String
+  courseUnitId String   @db.ObjectId
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  courseUnit CourseUnit @relation(fields: [courseUnitId], references: [id], onDelete: Cascade)
-
-  @@index([courseUnitId])
+  courseUnit CourseUnit @relation(fields: [courseUnitId], references: [id])
 }
 
 model Course {
-  id        String   @id @default(cuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   code      String?
   term      String?
   notes     String?
   color     String?  @default("#4F46E5")
-  userId    String
+  userId    String   @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id])
   assignments Assignment[]
 }
 
 model Assignment {
-  id          String   @id @default(cuid())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
   content     String?
@@ -98,11 +95,29 @@ model Assignment {
   completed   Boolean  @default(false)
   type        String   @default("assignment")
   priority    String   @default("medium")
-  courseId    String
-  userId      String
+  courseId    String   @db.ObjectId
+  userId      String   @db.ObjectId
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Message {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  subject     String
+  body        String
+  senderId    String?  @db.ObjectId
+  senderName  String   @default("Instructor")
+  recipientId String   @db.ObjectId
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sender    User? @relation("MessageSender", fields: [senderId], references: [id])
+  recipient User  @relation("MessageRecipient", fields: [recipientId], references: [id])
+
+  @@index([recipientId])
+  @@index([senderId])
 }

@@ -9,14 +9,16 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma skills sync || exit 0",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "db:push": "prisma db push",
+    "seed": "node scripts/seed-catalog.mjs && node scripts/seed-demo.mjs && node scripts/seed-demo-assignments.mjs && node scripts/seed-messages.mjs"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^6.19.3",
+    "dotenv": "^18.0.4",
     "lucide-react": "^1.47.0",
     "next": "16.3.4",
     "next-auth": "^5.0.0-beta.32",
-    "prisma": "^5.22.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
@@ -29,6 +31,7 @@
     "eslint-config-next": "16.3.4",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.6",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
