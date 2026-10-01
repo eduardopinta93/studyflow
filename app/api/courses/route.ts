@@ -11,6 +11,7 @@ async function getUserId(): Promise<string | null> {
 export async function GET() {
   try {
     const userId = await getUserId();
+
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -19,7 +20,12 @@ export async function GET() {
       where: { userId },
       include: {
         _count: { select: { assignments: true } },
-        assignments: { select: { completed: true, points: true } },
+        assignments: {
+          select: {
+            completed: true,
+            points: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -32,109 +38,195 @@ export async function GET() {
     );
   } catch (error) {
     console.error('GET /api/courses error:', error);
-    return NextResponse.json({ error: 'Failed to fetch courses' }, { status: 500 });
+
+    return NextResponse.json(
+      { error: 'Failed to fetch courses' },
+      { status: 500 }
+    );
   }
 }
-
-const MAX_CREDITS = 8;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
   try {
     const userId = await getUserId();
+
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json().catch(() => null);
-    const unitId = body && typeof body.unitId === 'string' ? body.unitId : '';
-    if (!unitId) {
-      return NextResponse.json(
-        { error: 'Select a course from the existing catalog' },
-        { status: 400 }
-      );
-    }
 
-    const unit = await db.courseUnit.findUnique({
-      where: { id: unitId },
-      include: { category: true },
-    });
-    if (!unit) {
-      return NextResponse.json({ error: 'Course not found in the catalog' }, { status: 404 });
-    }
+    /*
+     * Main application flow:
+     * create a course from an existing catalog course unit.
+     */
+    const unitId =
+      body && typeof body.unitId === 'string' ? body.unitId : '';
 
-    const owned = await db.course.findMany({
-      where: { userId },
-      select: { code: true, assignments: { select: { completed: true } } },
-    });
-    const ownedCodes = owned.map((c) => c.code).filter((c): c is string => !!c);
-    if (ownedCodes.includes(unit.code)) {
-      return NextResponse.json(
-        { error: 'That course is already on your dashboard' },
-        { status: 409 }
-      );
-    }
+    if (unitId) {
+      const unit = await db.courseUnit.findUnique({
+        where: { id: unitId },
+        include: { category: true },
+      });
 
-    const activeCodes = owned
-      .filter(
-        (c) =>
-          c.code &&
-          (c.assignments.length === 0 || c.assignments.some((a) => !a.completed))
-      )
-      .map((c) => c.code as string);
-    const activeUnits = activeCodes.length
-      ? await db.courseUnit.findMany({ where: { code: { in: activeCodes } } })
-      : [];
-    const activeCredits = activeUnits.reduce((sum, u) => sum + u.credits, 0);
-    if (activeCredits + unit.credits > MAX_CREDITS) {
-      return NextResponse.json(
-        {
-          error: `Adding this course would exceed the ${MAX_CREDITS}-credit limit — drop or finish a course first`,
-        },
-        { status: 400 }
-      );
-    }
+      if (!unit) {
+        return NextResponse.json(
+          { error: 'Course not found in the catalog' },
+          { status: 404 }
+        );
+      }
 
-    const templates = await db.assignmentTemplate.findMany({
-      where: { courseUnitId: unit.id },
-    });
-    const now = Date.now();
-
-    const course = await db.$transaction(
-      async (tx) => {
-        const created = await tx.course.create({
-          data: {
-            name: unit.name,
-            code: unit.code,
-            term: unit.category.name,
-            notes: unit.description,
-            color: unit.color ?? unit.category.color,
-            userId,
+      const owned = await db.course.findMany({
+        where: { userId },
+        select: {
+          code: true,
+          assignments: {
+            select: { completed: true },
           },
-        });
-        if (templates.length > 0) {
-          await tx.assignment.createMany({
-            data: templates.map((t) => ({
-              title: t.title,
-              description: t.description,
-              content: t.content,
-              points: t.points,
-              dueDate: new Date(now + t.dueInDays * DAY_MS),
-              type: t.type,
-              priority: t.priority,
-              courseId: created.id,
+        },
+      });
+
+      const ownedCodes = owned
+        .map((course) => course.code)
+        .filter((code): code is string => !!code);
+
+      if (ownedCodes.includes(unit.code)) {
+        return NextResponse.json(
+          { error: 'That course is already on your dashboard' },
+          { status: 409 }
+        );
+      }
+
+      const activeCodes = owned
+        .filter(
+          (course) =>
+            course.code &&
+            (course.assignments.length === 0 ||
+              course.assignments.some((assignment) => !assignment.completed))
+        )
+        .map((course) => course.code as string);
+
+      const activeUnits =
+        activeCodes.length > 0
+          ? await db.courseUnit.findMany({
+              where: { code: { in: activeCodes } },
+            })
+          : [];
+
+      const activeCredits = activeUnits.reduce(
+        (sum, courseUnit) => sum + courseUnit.credits,
+        0
+      );
+
+      const MAX_CREDITS = 8;
+
+      if (activeCredits + unit.credits > MAX_CREDITS) {
+        return NextResponse.json(
+          {
+            error: `Adding this course would exceed the ${MAX_CREDITS}-credit limit — drop or finish a course first`,
+          },
+          { status: 400 }
+        );
+      }
+
+      const templates = await db.assignmentTemplate.findMany({
+        where: { courseUnitId: unit.id },
+      });
+
+      const now = Date.now();
+
+      const course = await db.$transaction(
+        async (tx) => {
+          const created = await tx.course.create({
+            data: {
+              name: unit.name,
+              code: unit.code,
+              term: unit.category.name,
+              notes: unit.description,
+              color: unit.color ?? unit.category.color,
               userId,
-            })),
+            },
           });
-        }
-        return created;
+
+          if (templates.length > 0) {
+            await tx.assignment.createMany({
+              data: templates.map((template) => ({
+                title: template.title,
+                description: template.description,
+                content: template.content,
+                points: template.points,
+                dueDate: new Date(
+                  now + template.dueInDays * 24 * 60 * 60 * 1000
+                ),
+                type: template.type,
+                priority: template.priority,
+                courseId: created.id,
+                userId,
+              })),
+            });
+          }
+
+          return created;
+        },
+        { timeout: 30_000 }
+      );
+
+      return NextResponse.json(course, { status: 201 });
+    }
+
+    /*
+     * Direct CRUD flow:
+     * allows creating a course directly, which preserves the
+     * Course CRUD behavior implemented in this feature branch.
+     */
+    const name =
+      body && typeof body.name === 'string' ? body.name.trim() : '';
+
+    if (!name) {
+      return NextResponse.json(
+        { error: 'Course name is required.' },
+        { status: 400 }
+      );
+    }
+
+    const code =
+      body && typeof body.code === 'string'
+        ? body.code.trim() || null
+        : null;
+
+    const term =
+      body && typeof body.term === 'string'
+        ? body.term.trim() || null
+        : null;
+
+    const notes =
+      body && typeof body.notes === 'string'
+        ? body.notes.trim() || null
+        : null;
+
+    const color =
+      body && typeof body.color === 'string'
+        ? body.color
+        : undefined;
+
+    const course = await db.course.create({
+      data: {
+        name,
+        code,
+        term,
+        notes,
+        ...(color !== undefined && { color }),
+        userId,
       },
-      { timeout: 30_000 }
-    );
+    });
 
     return NextResponse.json(course, { status: 201 });
   } catch (error) {
     console.error('POST /api/courses error:', error);
-    return NextResponse.json({ error: 'Failed to add course' }, { status: 500 });
+
+    return NextResponse.json(
+      { error: 'Failed to create course' },
+      { status: 500 }
+    );
   }
 }
