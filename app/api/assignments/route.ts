@@ -41,13 +41,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
-    if (!dueDate) {
-      return NextResponse.json({ error: 'Due date is required' }, { status: 400 });
-    }
+        if (!dueDate) {
+        return NextResponse.json(
+          { error: 'Due date is required' },
+          { status: 400 }
+        );
+      }
 
-    if (!courseId) {
-      return NextResponse.json({ error: 'Course is required' }, { status: 400 });
-    }
+      const parsedDueDate = new Date(dueDate);
+
+      if (Number.isNaN(parsedDueDate.getTime())) {
+        return NextResponse.json(
+          { error: 'Due date must be a valid date' },
+          { status: 400 }
+        );
+      }
+
+      if (!courseId || typeof courseId !== 'string') {
+        return NextResponse.json(
+          { error: 'Course is required' },
+          { status: 400 }
+        );
+      }
 
     const course = await db.course.findFirst({
       where: { id: courseId, userId },
@@ -63,7 +78,7 @@ export async function POST(request: NextRequest) {
         description: description?.trim() || null,
         content: typeof content === 'string' && content.trim() ? content.trim() : null,
         points: Number.isFinite(Number(points)) && Number(points) > 0 ? Math.min(100, Math.round(Number(points))) : 10,
-        dueDate: new Date(dueDate),
+        dueDate: parsedDueDate,
         courseId,
         userId,
         type: type || 'assignment',
