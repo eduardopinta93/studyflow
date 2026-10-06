@@ -7,30 +7,57 @@ async function getUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
+function isValidObjectId(value: string) {
+  return /^[0-9a-fA-F]{24}$/.test(value);
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
     const userId = await getUserId();
+
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { courseId } = await params;
+
+    if (!isValidObjectId(courseId)) {
+      return NextResponse.json(
+        { error: 'Invalid course ID.' },
+        { status: 400 }
+      );
+    }
+
     const course = await db.course.findFirst({
-      where: { id: courseId, userId },
-      include: { assignments: { orderBy: { dueDate: 'asc' } } },
+      where: {
+        id: courseId,
+        userId,
+      },
+      include: {
+        assignments: {
+          orderBy: { dueDate: 'asc' },
+        },
+      },
     });
 
     if (!course) {
-      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Course not found.' },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(course);
   } catch (error) {
     console.error('GET /api/courses/[courseId] error:', error);
-    return NextResponse.json({ error: 'Failed to fetch course' }, { status: 500 });
+
+    return NextResponse.json(
+      { error: 'Failed to fetch course' },
+      { status: 500 }
+    );
   }
 }
 
@@ -40,37 +67,77 @@ export async function PATCH(
 ) {
   try {
     const userId = await getUserId();
+
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { courseId } = await params;
-    const body = await request.json();
-    const { name, code, term, notes, color } = body;
+
+    if (!isValidObjectId(courseId)) {
+      return NextResponse.json(
+        { error: 'Invalid course ID.' },
+        { status: 400 }
+      );
+    }
 
     const existing = await db.course.findFirst({
-      where: { id: courseId, userId },
+      where: {
+        id: courseId,
+        userId,
+      },
     });
 
     if (!existing) {
-      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Course not found.' },
+        { status: 404 }
+      );
+    }
+
+    const body = await request.json();
+
+    if (
+      body.name !== undefined &&
+      (typeof body.name !== 'string' || body.name.trim().length === 0)
+    ) {
+      return NextResponse.json(
+        { error: 'Course name cannot be empty.' },
+        { status: 400 }
+      );
     }
 
     const course = await db.course.update({
-      where: { id: courseId },
+      where: {
+        id: courseId,
+      },
       data: {
-        ...(name !== undefined && { name: name.trim() }),
-        ...(code !== undefined && { code: code?.trim() || null }),
-        ...(term !== undefined && { term: term?.trim() || null }),
-        ...(notes !== undefined && { notes: notes?.trim() || null }),
-        ...(color !== undefined && { color }),
+        ...(typeof body.name === 'string' && {
+          name: body.name.trim(),
+        }),
+        ...(typeof body.code === 'string' && {
+          code: body.code.trim() || null,
+        }),
+        ...(typeof body.term === 'string' && {
+          term: body.term.trim() || null,
+        }),
+        ...(typeof body.notes === 'string' && {
+          notes: body.notes.trim() || null,
+        }),
+        ...(typeof body.color === 'string' && {
+          color: body.color,
+        }),
       },
     });
 
     return NextResponse.json(course);
   } catch (error) {
     console.error('PATCH /api/courses/[courseId] error:', error);
-    return NextResponse.json({ error: 'Failed to update course' }, { status: 500 });
+
+    return NextResponse.json(
+      { error: 'Failed to update course' },
+      { status: 500 }
+    );
   }
 }
 
@@ -80,25 +147,49 @@ export async function DELETE(
 ) {
   try {
     const userId = await getUserId();
+
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { courseId } = await params;
 
+    if (!isValidObjectId(courseId)) {
+      return NextResponse.json(
+        { error: 'Invalid course ID.' },
+        { status: 400 }
+      );
+    }
+
     const existing = await db.course.findFirst({
-      where: { id: courseId, userId },
+      where: {
+        id: courseId,
+        userId,
+      },
     });
 
     if (!existing) {
-      return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Course not found.' },
+        { status: 404 }
+      );
     }
 
-    await db.course.delete({ where: { id: courseId } });
+    await db.course.delete({
+      where: {
+        id: courseId,
+      },
+    });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      message: 'Course deleted successfully.',
+    });
   } catch (error) {
     console.error('DELETE /api/courses/[courseId] error:', error);
-    return NextResponse.json({ error: 'Failed to delete course' }, { status: 500 });
+
+    return NextResponse.json(
+      { error: 'Failed to delete course' },
+      { status: 500 }
+    );
   }
 }
