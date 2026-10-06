@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import {
   Plus,
   X,
@@ -15,7 +15,7 @@ import {
   Search,
   ArrowUpDown,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import CoursePickerModal from '../components/CoursePickerModal';
 import { getCourseImage } from '@/lib/course-image';
@@ -47,7 +47,16 @@ const COLOR_PRESETS = [
 ];
 
 export default function CoursesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[var(--background)]" />}>
+      <CoursesContent />
+    </Suspense>
+  );
+}
+
+function CoursesContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -93,6 +102,13 @@ export default function CoursesPage() {
   const openAddModal = () => {
     setShowPicker(true);
   };
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      openAddModal();
+    }
+  }, [searchParams]);
 
   const openEditModal = (course: Course) => {
     setFormData({

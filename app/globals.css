@@ -80,3 +80,24 @@ body {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
 }
+
+/* Highlight pills: run in from the left, hold, run away to the right —
+   one by one on a loop (9s cycle, staggered by 3s per item). */
+@keyframes feature-run {
+  0% { opacity: 0; transform: translateX(-130%); }
+  3% { opacity: 0; transform: translateX(-90%); }
+  6% { opacity: 1; transform: translateX(0); }
+  28% { opacity: 1; transform: translateX(0); }
+  34% { opacity: 0; transform: translateX(130%); }
+  100% { opacity: 0; transform: translateX(130%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-run {
+    animation: none !important;
+    position: static !important;
+    margin-bottom: 0.75rem;
+  }
+  .feature-run:last-child { margin-bottom: 0; }
+  .feature-stage { height: auto !important; }
+}

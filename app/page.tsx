@@ -1,7 +1,6 @@
 'use client';
 
 import Sidebar from './components/Sidebar';
-import QuickActions from './components/dashboard/QuickActions';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { BookOpen, Calendar, Hash, StickyNote } from 'lucide-react';
@@ -58,8 +57,6 @@ export default function Home() {
                   : `${courses.length} course${courses.length !== 1 ? 's' : ''} on your dashboard`}
             </p>
           </div>
-
-          <QuickActions />
 
           <div className="mt-5 sm:mt-6">
             {loading ? (

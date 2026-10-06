@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CheckCircle2, GraduationCap, Layers } from 'lucide-react';
 
@@ -147,9 +148,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <div className="max-w-3xl mx-auto p-6 sm:p-10">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center text-white text-sm font-bold">
-            SF
-          </div>
+          <Image src="/logo.png" alt="" width={40} height={40} className="w-10 h-10 rounded-xl" />
           <div>
             <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-heading)' }}>
               {step === 'category' ? 'Choose your study category' : 'Pick your course units'}

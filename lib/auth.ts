@@ -42,9 +42,9 @@ const providers: NextAuthConfig['providers'] = [
   }),
 ];
 
-// OAuth providers are only registered when their credentials are configured
-if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) providers.push(Google);
-if (process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET) providers.push(GitHub);
+// Google and GitHub are always registered so their sign-in buttons stay visible;
+// they start working once AUTH_GOOGLE_* / AUTH_GITHUB_* credentials are set in .env
+providers.push(Google, GitHub);
 if (process.env.AUTH_AZURE_AD_ID && process.env.AUTH_AZURE_AD_SECRET) providers.push(AzureAD);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({

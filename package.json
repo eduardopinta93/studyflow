@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma skills sync || exit 0",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "db:push": "prisma db push",
+    "seed": "node scripts/seed-catalog.mjs && node scripts/seed-demo.mjs && node scripts/seed-demo-assignments.mjs && node scripts/seed-messages.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
