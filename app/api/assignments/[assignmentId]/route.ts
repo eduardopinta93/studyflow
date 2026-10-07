@@ -29,14 +29,76 @@ export async function PATCH(
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
     }
 
-    if (courseId !== undefined) {
-      const course = await db.course.findFirst({
-        where: { id: courseId, userId },
-      });
-      if (!course) {
-        return NextResponse.json({ error: 'Course not found' }, { status: 404 });
-      }
-    }
+    if (title !== undefined) {
+  if (typeof title !== 'string' || title.trim().length === 0) {
+    return NextResponse.json(
+      { error: 'Title cannot be empty' },
+      { status: 400 }
+    );
+  }
+}
+
+if (points !== undefined) {
+  const numericPoints = Number(points);
+
+  if (
+    !Number.isFinite(numericPoints) ||
+    numericPoints <= 0 ||
+    numericPoints > 100
+  ) {
+    return NextResponse.json(
+      { error: 'Points must be a number between 1 and 100' },
+      { status: 400 }
+    );
+  }
+}
+
+let parsedDueDate: Date | undefined;
+
+if (dueDate !== undefined) {
+  if (typeof dueDate !== 'string') {
+    return NextResponse.json(
+      { error: 'Due date must be a valid date' },
+      { status: 400 }
+    );
+  }
+
+  parsedDueDate = new Date(dueDate);
+
+  if (Number.isNaN(parsedDueDate.getTime())) {
+    return NextResponse.json(
+      { error: 'Due date must be a valid date' },
+      { status: 400 }
+    );
+  }
+}
+
+if (completed !== undefined && typeof completed !== 'boolean') {
+  return NextResponse.json(
+    { error: 'Completed must be a boolean' },
+    { status: 400 }
+  );
+}
+
+if (courseId !== undefined) {
+  if (typeof courseId !== 'string' || !courseId) {
+    return NextResponse.json(
+      { error: 'Course ID must be valid' },
+      { status: 400 }
+    );
+  }
+
+  const course = await db.course.findFirst({
+    where: { id: courseId, userId },
+  });
+
+  if (!course) {
+    return NextResponse.json(
+      { error: 'Course not found' },
+      { status: 404 }
+    );
+  }
+}
 
     const assignment = await db.assignment.update({
       where: { id: assignmentId },
@@ -44,8 +106,8 @@ export async function PATCH(
         ...(title !== undefined && { title: title.trim() }),
         ...(description !== undefined && { description: description?.trim() || null }),
         ...(content !== undefined && { content: typeof content === 'string' && content.trim() ? content.trim() : null }),
-        ...(points !== undefined && Number.isFinite(Number(points)) && Number(points) > 0 && { points: Math.min(100, Math.round(Number(points))) }),
-        ...(dueDate !== undefined && { dueDate: new Date(dueDate) }),
+        ...(points !== undefined && { points: Math.min(100, Math.round(Number(points))) }),
+        ...(parsedDueDate !== undefined && { dueDate: parsedDueDate }),
         ...(completed !== undefined && { completed }),
         ...(type !== undefined && { type }),
         ...(priority !== undefined && { priority }),
