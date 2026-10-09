@@ -1,6 +1,7 @@
 'use client';
 
 import Sidebar from '../components/Sidebar';
+import ThemeToggle from '../components/ThemeToggle';
 import TodoList from '../components/dashboard/TodoList';
 
 export default function TodosPage() {
@@ -9,7 +10,8 @@ export default function TodosPage() {
       <Sidebar />
       <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8">
         <div className="max-w-3xl mx-auto">
-          <div className="mb-6 sm:mb-8 pt-12 lg:pt-0">
+          <div className="mb-6 sm:mb-8 pt-12 lg:pt-0 flex items-start justify-between gap-4">
+            <div>
             <h1
               className="text-2xl sm:text-3xl font-bold text-[var(--foreground)]"
               style={{ fontFamily: 'var(--font-heading)' }}
@@ -19,6 +21,8 @@ export default function TodosPage() {
             <p className="text-sm text-[var(--muted-foreground)] mt-1">
               Your scratchpad tasks
             </p>
+            </div>
+            <ThemeToggle />
           </div>
           <TodoList />
         </div>

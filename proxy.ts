@@ -5,11 +5,16 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth;
   const isAuthPage = pathname.startsWith('/auth');
+  const isPublicPage = pathname === '/terms' || pathname === '/privacy';
 
   if (isAuthPage) {
     if (isLoggedIn && pathname !== '/auth/forgot-password') {
       return NextResponse.redirect(new URL('/', req.url));
     }
+    return NextResponse.next();
+  }
+
+  if (isPublicPage) {
     return NextResponse.next();
   }
 

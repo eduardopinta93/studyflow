@@ -20,7 +20,7 @@ export default function QuickActions() {
   }, []);
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5">
+    <div className="glass rounded-2xl p-5">
       <h2 className="text-sm font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-4">Quick Actions</h2>
       <div className="flex flex-wrap gap-3">
         {enrolled === false && (

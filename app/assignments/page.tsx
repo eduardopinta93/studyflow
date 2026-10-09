@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus, X, Edit2, Trash2, ClipboardList, ArrowLeft, BookOpen, Check } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import ThemeToggle from '../components/ThemeToggle';
 import Link from 'next/link';
+import { useIsAdmin } from '@/lib/use-is-admin';
 
 interface Course {
   id: string;
@@ -34,14 +36,14 @@ const typeColors: Record<string, string> = {
 };
 
 const priorityColors: Record<string, string> = {
-  low: 'text-blue-500',
-  medium: 'text-amber-500',
-  high: 'text-red-500',
+  low: 'text-[var(--info-text)]',
+  medium: 'text-[var(--warning-text)]',
+  high: 'text-[var(--destructive-text)]',
 };
 
 export default function AssignmentsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--background)]" />}>
+    <Suspense fallback={<div className="min-h-screen glass-backdrop" />}>
       <AssignmentsContent />
     </Suspense>
   );
@@ -50,6 +52,7 @@ export default function AssignmentsPage() {
 function AssignmentsContent() {
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
+  const isAdmin = useIsAdmin();
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -71,19 +74,19 @@ function AssignmentsContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [assignmentsRes, coursesRes] = await Promise.all([
-        fetch('/api/assignments'),
-        fetch('/api/courses'),
-      ]);
-      if (assignmentsRes.ok) setAssignments(await assignmentsRes.json());
-      if (coursesRes.ok) setCourses(await coursesRes.json());
-    } catch {
-      console.error('Failed to fetch data');
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = useCallback(() => {
+    Promise.all([
+      fetch('/api/assignments').then((res) => (res.ok ? res.json() : null)),
+      fetch('/api/courses').then((res) => (res.ok ? res.json() : null)),
+    ])
+      .then(([assignmentsData, coursesData]) => {
+        if (Array.isArray(assignmentsData)) setAssignments(assignmentsData);
+        if (Array.isArray(coursesData)) setCourses(coursesData);
+      })
+      .catch(() => {
+        console.error('Failed to fetch data');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -190,7 +193,7 @@ function AssignmentsContent() {
   const activeCourse = courseId ? courses.find((c) => c.id === courseId) : null;
 
   return (
-    <div className="flex min-h-screen bg-[var(--background)]">
+    <div className="flex min-h-screen glass-backdrop">
       <Sidebar />
       <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8">
         <div className="max-w-6xl mx-auto">
@@ -206,14 +209,19 @@ function AssignmentsContent() {
               </h1>
               <p className="text-sm text-[var(--muted-foreground)] mt-1">{filtered.length} assignment{filtered.length !== 1 ? 's' : ''}{activeCourse ? '' : `, ${assignments.filter(a => !a.completed).length} pending`}</p>
             </div>
-            <button onClick={openAddModal} className="flex items-center gap-2 px-4 py-2.5 bg-[var(--accent)] text-white rounded-xl text-sm font-medium hover:bg-[var(--accent-hover)] transition-all shadow-sm w-full sm:w-auto justify-center">
-              <Plus size={16} /> New Assignment
-            </button>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {isAdmin && (
+                <button onClick={openAddModal} className="flex items-center gap-2 px-4 py-2.5 bg-[var(--accent)] text-white rounded-xl text-sm font-medium hover:bg-[var(--accent-hover)] transition-all shadow-sm w-full sm:w-auto justify-center">
+                  <Plus size={16} /> New Assignment
+                </button>
+              )}
+              <ThemeToggle />
+            </div>
           </div>
 
           <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
             {(['all', 'pending', 'completed'] as const).map((f) => (
-              <button key={f} onClick={() => setFilter(f)} className={`px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${filter === f ? 'bg-[var(--accent)] text-white' : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)]'}`}>
+              <button key={f} onClick={() => setFilter(f)} className={`px-3 sm:px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${filter === f ? 'bg-[var(--accent)] text-white' : 'glass-flat text-[var(--muted-foreground)] hover:bg-[var(--muted)]'}`}>
                 {f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
@@ -222,30 +230,43 @@ function AssignmentsContent() {
           {loading ? (
             <div className="text-center py-20"><div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" /></div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16 sm:py-20 bg-[var(--card)] border border-[var(--border)] rounded-2xl px-4">
+            <div className="text-center py-16 sm:py-20 glass rounded-[1.75rem] px-4">
               <ClipboardList className="mx-auto text-[var(--muted-foreground)] mb-4" size={40} />
               <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ fontFamily: 'var(--font-heading)' }}>No assignments</h3>
               <p className="text-sm text-[var(--muted-foreground)] mb-6">{filter !== 'all' ? 'No assignments in this filter' : 'Add your first assignment'}</p>
-              {filter === 'all' && courses.length > 0 && (
+              {filter === 'all' && courses.length > 0 && isAdmin && (
                 <button onClick={openAddModal} className="px-5 py-2.5 bg-[var(--accent)] text-white rounded-xl text-sm font-medium hover:bg-[var(--accent-hover)] transition-all">Add Assignment</button>
               )}
             </div>
           ) : (
             <div className="space-y-2 sm:space-y-3">
               {filtered.map((a) => (
-                <div key={a.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-[var(--card)] border border-[var(--border)] rounded-xl sm:rounded-2xl hover:shadow-md transition-all">
-                  <button
-                    onClick={() => toggleComplete(a)}
-                    title={a.completed ? 'Mark as not done' : `Mark done and earn ${a.points} points`}
-                    className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
-                      a.completed
-                        ? 'bg-[var(--success)] border-[var(--success)] text-white'
-                        : 'border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--success)] hover:text-[var(--success)]'
-                    }`}
-                  >
-                    {a.completed ? <Check size={12} /> : null}
-                    {a.completed ? 'Done' : 'Mark done'}
-                  </button>
+                <div key={a.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 glass-flat rounded-xl sm:rounded-2xl hover:shadow-md transition-all">
+                  {isAdmin ? (
+                    <button
+                      onClick={() => toggleComplete(a)}
+                      title={a.completed ? 'Mark as not done' : `Mark done and earn ${a.points} points`}
+                      className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
+                        a.completed
+                          ? 'bg-[var(--success)] border-[var(--success)] text-white'
+                          : 'border-white/15 text-[var(--muted-foreground)] hover:border-[var(--success)] hover:text-[var(--success)]'
+                      }`}
+                    >
+                      {a.completed ? <Check size={12} /> : null}
+                      {a.completed ? 'Done' : 'Mark done'}
+                    </button>
+                  ) : (
+                    <span
+                      className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border-2 ${
+                        a.completed
+                          ? 'bg-[var(--success)] border-[var(--success)] text-white'
+                          : 'border-white/15 text-[var(--muted-foreground)]'
+                      }`}
+                    >
+                      {a.completed ? <Check size={12} /> : null}
+                      {a.completed ? 'Done' : 'Not done'}
+                    </span>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-medium text-[var(--foreground)] ${a.completed ? 'line-through text-[var(--muted-foreground)]' : ''}`}>{a.title}</p>
                     <p className="text-xs text-[var(--muted-foreground)] truncate">{a.course.name}{a.course.code ? ` (${a.course.code})` : ''}</p>
@@ -269,12 +290,16 @@ function AssignmentsContent() {
                     <button onClick={() => setViewingAssignment(a)} title="Lesson content" className="p-1.5 sm:p-2 hover:bg-[var(--muted)] rounded-lg text-[var(--muted-foreground)] transition-colors">
                       <BookOpen size={14} />
                     </button>
-                    <button onClick={() => openEditModal(a)} className="p-1.5 sm:p-2 hover:bg-[var(--muted)] rounded-lg text-[var(--muted-foreground)] transition-colors">
-                      <Edit2 size={14} />
-                    </button>
-                    <button onClick={() => handleDelete(a.id)} className="p-1.5 sm:p-2 hover:bg-red-50 dark:hover:bg-red-950/30 text-[var(--destructive)] rounded-lg transition-colors">
-                      <Trash2 size={14} />
-                    </button>
+                    {isAdmin && (
+                      <>
+                        <button onClick={() => openEditModal(a)} className="p-1.5 sm:p-2 hover:bg-[var(--muted)] rounded-lg text-[var(--muted-foreground)] transition-colors">
+                          <Edit2 size={14} />
+                        </button>
+                        <button onClick={() => handleDelete(a.id)} className="p-1.5 sm:p-2 hover:bg-red-50 dark:hover:bg-red-950/30 text-[var(--destructive-text)] rounded-lg transition-colors">
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -283,41 +308,41 @@ function AssignmentsContent() {
         </div>
       </main>
 
-      {showModal && (
+      {isAdmin && showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 w-full sm:max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="glass-popover rounded-t-[1.75rem] sm:rounded-[1.75rem] p-5 sm:p-6 w-full sm:max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg sm:text-xl font-bold" style={{ fontFamily: 'var(--font-heading)' }}>{editingAssignment ? 'Edit Assignment' : 'New Assignment'}</h2>
               <button onClick={() => { setShowModal(false); resetForm(); }} className="p-2 hover:bg-[var(--muted)] rounded-xl"><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1.5">Title <span className="text-[var(--destructive)]">*</span></label>
-                <input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors" placeholder="Assignment title" autoFocus required />
+                <label className="block text-sm font-medium mb-1.5">Title <span className="text-[var(--destructive-text)]">*</span></label>
+                <input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2.5 glass-field rounded-xl text-sm" placeholder="Assignment title" autoFocus required />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1.5">Course <span className="text-[var(--destructive)]">*</span></label>
-                <select value={formData.courseId} onChange={(e) => setFormData({ ...formData, courseId: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors" required>
+                <label className="block text-sm font-medium mb-1.5">Course <span className="text-[var(--destructive-text)]">*</span></label>
+                <select value={formData.courseId} onChange={(e) => setFormData({ ...formData, courseId: e.target.value })} className="w-full px-3 py-2.5 glass-field rounded-xl text-sm" required>
                   <option value="">Select a course</option>
                   {courses.map((c) => <option key={c.id} value={c.id}>{c.name}{c.code ? ` (${c.code})` : ''}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Description</label>
-                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors resize-none" placeholder="Optional description" rows={2} />
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2.5 glass-field rounded-xl text-sm resize-none" placeholder="Optional description" rows={2} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Lesson Content</label>
-                <textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors resize-none" placeholder="Lesson material for this assignment — concepts, steps, references" rows={4} />
+                <textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} className="w-full px-3 py-2.5 glass-field rounded-xl text-sm resize-none" placeholder="Lesson material for this assignment — concepts, steps, references" rows={4} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1.5">Due Date <span className="text-[var(--destructive)]">*</span></label>
-                <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors" required />
+                <label className="block text-sm font-medium mb-1.5">Due Date <span className="text-[var(--destructive-text)]">*</span></label>
+                <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} className="w-full px-3 py-2.5 glass-field rounded-xl text-sm" required />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Type</label>
-                  <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors">
+                  <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full px-3 py-2.5 glass-field rounded-xl text-sm">
                     <option value="assignment">Assignment</option>
                     <option value="exam">Exam</option>
                     <option value="project">Project</option>
@@ -326,7 +351,7 @@ function AssignmentsContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Priority</label>
-                  <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors">
+                  <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} className="w-full px-3 py-2.5 glass-field rounded-xl text-sm">
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
@@ -334,12 +359,12 @@ function AssignmentsContent() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5">Points</label>
-                  <input type="number" min={1} max={100} value={formData.points} onChange={(e) => setFormData({ ...formData, points: Number(e.target.value) })} className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors" />
+                  <input type="number" min={1} max={100} value={formData.points} onChange={(e) => setFormData({ ...formData, points: Number(e.target.value) })} className="w-full px-3 py-2.5 glass-field rounded-xl text-sm" />
                 </div>
               </div>
-              {error && <div className="px-3 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-[var(--destructive)] text-sm">{error}</div>}
+              {error && <div className="px-3 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-[var(--destructive-text)] text-sm">{error}</div>}
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="flex-1 py-2.5 border border-[var(--border)] rounded-xl text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors">Cancel</button>
+                <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="flex-1 py-2.5 glass-btn rounded-xl text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors">Cancel</button>
                 <button type="submit" disabled={saving} className="flex-1 py-2.5 bg-[var(--accent)] text-white rounded-xl text-sm font-medium hover:bg-[var(--accent-hover)] transition-all disabled:opacity-50">
                   {saving ? 'Saving...' : editingAssignment ? 'Save Changes' : 'Add Assignment'}
                 </button>
@@ -351,7 +376,7 @@ function AssignmentsContent() {
 
       {viewingAssignment && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50" onClick={() => setViewingAssignment(null)}>
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 w-full sm:max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="glass-popover rounded-t-[1.75rem] sm:rounded-[1.75rem] p-5 sm:p-6 w-full sm:max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>
                 <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -372,19 +397,24 @@ function AssignmentsContent() {
             </div>
 
             {viewingAssignment.description && (
-              <p className="text-sm text-[var(--muted-foreground)] mb-4 pb-4 border-b border-[var(--border)]">{viewingAssignment.description}</p>
+              <p className="text-sm text-[var(--muted-foreground)] mb-4 pb-4 border-b border-white/10">{viewingAssignment.description}</p>
             )}
 
             <div className="flex items-center gap-2 mb-2">
               <BookOpen size={15} className="text-[var(--accent)]" />
               <span className="text-sm font-semibold">Lesson</span>
+              {isAdmin && (
+                <button onClick={() => viewingAssignment && toggleComplete(viewingAssignment!)} className="px-2 py-1 rounded bg-blue-500 text-white">
+                  Mark as Complete
+                </button>
+              )}
             </div>
             {viewingAssignment.content ? (
-              <div className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-line bg-[var(--background)] border border-[var(--border)] rounded-xl p-4">
+              <div className="text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-line glass-inset rounded-xl p-4">
                 {viewingAssignment.content}
               </div>
             ) : (
-              <p className="text-sm text-[var(--muted-foreground)] bg-[var(--background)] border border-[var(--border)] rounded-xl p-4">
+              <p className="text-sm text-[var(--muted-foreground)] glass-inset rounded-xl p-4">
                 No lesson content for this assignment yet. Add one via Edit.
               </p>
             )}

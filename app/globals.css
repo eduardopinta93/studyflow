@@ -1,35 +1,59 @@
 @import 'tailwindcss';
 
 :root {
-  --background: #F8FAFC;
-  --foreground: #0F172A;
-  --card: #FFFFFF;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --border: #E2E8F0;
-  --accent: #4F46E5;
-  --accent-hover: #4338CA;
+  --background: #E8F3FC;
+  --foreground: #0F3A5E;
+  --card: #E8F3FC;
+  --muted: #D6EAF9;
+  --muted-foreground: #3B6B96;
+  --border: #CCE4F7;
+  --accent: #0078D4;
+  --accent-hover: #005FB8;
   --accent-foreground: #FFFFFF;
   --sky: #0EA5E9;
   --success: #16A34A;
   --warning: #F59E0B;
   --destructive: #DC2626;
+
+  /* status text — tuned for contrast on the light canvas */
+  --destructive-text: #B91C1C;
+  --success-text: #047857;
+  --warning-text: #B45309;
+  --info-text: #1D4ED8;
+  --purple-text: #6D28D9;
+  --orange-text: #C2410C;
+
+  /* neumorphic light source */
+  --neu-light: #FFFFFF;
+  --neu-dark: #B5D2EA;
 }
 
 .dark {
-  --background: #0F172A;
-  --foreground: #F8FAFC;
-  --card: #1E293B;
-  --muted: #334155;
-  --muted-foreground: #94A3B8;
-  --border: #334155;
-  --accent: #818CF8;
-  --accent-hover: #6366F1;
+  --background: #0A2333;
+  --foreground: #E3F2FD;
+  --card: #0A2333;
+  --muted: #123A54;
+  --muted-foreground: #8FB6D4;
+  --border: #1B4A69;
+  --accent: #0099FF;
+  --accent-hover: #007ACC;
   --accent-foreground: #FFFFFF;
   --sky: #38BDF8;
   --success: #4ADE80;
   --warning: #FBBF24;
   --destructive: #F87171;
+
+  /* status text — tuned for contrast on the dark canvas */
+  --destructive-text: #FCA5A5;
+  --success-text: #34D399;
+  --warning-text: #FBBF24;
+  --info-text: #60A5FA;
+  --purple-text: #C4B5FD;
+  --orange-text: #FB923C;
+
+  /* neumorphic light source */
+  --neu-light: #1E5173;
+  --neu-dark: #04121D;
 }
 
 @theme inline {
@@ -53,6 +77,7 @@
 
 body {
   background: var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: 'Inter', var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
@@ -76,10 +101,49 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes strength-bar {
+  from { width: 0%; }
+  to { width: var(--strength-width, 0%); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @keyframes hero-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
 }
+
 
 /* Highlight pills: run in from the left, hold, run away to the right —
    one by one on a loop (9s cycle, staggered by 3s per item). */
@@ -100,4 +164,413 @@ body {
   }
   .feature-run:last-child { margin-bottom: 0; }
   .feature-stage { height: auto !important; }
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fade-in var(--animation-duration, 0.5s) ease-out both;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up var(--animation-duration, 0.5s) ease-out both;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft var(--animation-duration, 2s) ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: shake var(--animation-duration, 0.3s) ease-in-out;
+}
+
+.animate-slide-down {
+  animation: slide-down var(--animation-duration, 0.3s) ease-out both;
+}
+
+.animate-spin-slow {
+  animation: spin-slow var(--animation-duration, 2s) linear infinite;
+}
+
+/* Staggered animation delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+.stagger-7 { animation-delay: 0.7s; }
+.stagger-8 { animation-delay: 0.8s; }
+.stagger-9 { animation-delay: 0.9s; }
+.stagger-10 { animation-delay: 1.0s; }
+
+/* Hover animations */
+.hover-lift {
+  transition: transform var(--transition-speed, 0.2s) ease, box-shadow var(--transition-speed, 0.2s) ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 14px var(--neu-dark), -6px -6px 14px var(--neu-light);
+}
+
+.hover-scale {
+  transition: transform var(--transition-speed, 0.2s) ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+/* Focus animations */
+.focus-ring {
+  transition: all var(--transition-speed, 0.2s) ease;
+}
+
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* ============================================================
+   Neumorphism design system
+   Every surface is the same color as the page; depth comes
+   purely from soft dual shadows — light from the top-left,
+   shade to the bottom-right. Pressed states invert the pair.
+   ============================================================ */
+
+/* raised panel: soft extruded card */
+.glass {
+  background: var(--background);
+  border: 1px solid transparent;
+  box-shadow:
+    10px 10px 22px var(--neu-dark),
+    -10px -10px 22px var(--neu-light);
+}
+
+.glass-strong {
+  background: var(--background);
+  border: 1px solid transparent;
+  box-shadow:
+    16px 16px 34px var(--neu-dark),
+    -16px -16px 34px var(--neu-light);
+}
+
+/* lightweight raised surface — for long lists/grids */
+.glass-flat {
+  background: var(--background);
+  border: 1px solid transparent;
+  box-shadow:
+    7px 7px 15px var(--neu-dark),
+    -7px -7px 15px var(--neu-light);
+}
+
+.glass-hover {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.glass-hover:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow:
+    14px 14px 30px var(--neu-dark),
+    -14px -14px 30px var(--neu-light),
+    0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+/* legacy sheen hook — gloss does not belong in neumorphism */
+.glass-sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.glass-sheen::after {
+  content: none;
+}
+
+/* sunken field (inputs, selects, textareas) */
+.glass-field {
+  display: block;
+  width: 100%;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid transparent;
+  box-shadow:
+    inset 4px 4px 9px var(--neu-dark),
+    inset -4px -4px 9px var(--neu-light);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.glass-field::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.65;
+}
+
+.glass-field:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow:
+    inset 4px 4px 9px var(--neu-dark),
+    inset -4px -4px 9px var(--neu-light),
+    0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.glass-field-error:focus {
+  border-color: color-mix(in srgb, var(--destructive) 55%, transparent);
+  box-shadow:
+    inset 4px 4px 9px var(--neu-dark),
+    inset -4px -4px 9px var(--neu-light),
+    0 0 0 3px color-mix(in srgb, var(--destructive) 28%, transparent);
+}
+
+/* raised buttons */
+.glass-btn {
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid transparent;
+  box-shadow:
+    6px 6px 13px var(--neu-dark),
+    -6px -6px 13px var(--neu-light);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.glass-btn:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+  box-shadow:
+    9px 9px 19px var(--neu-dark),
+    -9px -9px 19px var(--neu-light);
+}
+
+.glass-btn:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 4px 4px 8px var(--neu-dark),
+    inset -4px -4px 8px var(--neu-light);
+}
+
+.glass-btn:disabled {
+  opacity: 0.55;
+  transform: none;
+  cursor: not-allowed;
+}
+
+.glass-btn-primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-foreground);
+  box-shadow:
+    7px 7px 16px color-mix(in srgb, var(--accent) 40%, var(--neu-dark)),
+    -6px -6px 14px var(--neu-light);
+}
+
+.glass-btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: transparent;
+  box-shadow:
+    10px 10px 22px color-mix(in srgb, var(--accent) 48%, var(--neu-dark)),
+    -8px -8px 18px var(--neu-light);
+}
+
+.glass-btn-primary:active {
+  box-shadow:
+    inset 4px 4px 10px color-mix(in srgb, #000 35%, transparent);
+}
+
+/* sidebar / floating nav */
+.glass-nav {
+  background: var(--background);
+  border-right: 1px solid transparent;
+  box-shadow:
+    16px 0 40px -18px var(--neu-dark),
+    inset -1px 0 0 color-mix(in srgb, var(--neu-dark) 60%, transparent);
+}
+
+.glass-nav-item {
+  border: 1px solid transparent;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.glass-nav-item:hover {
+  transform: translateX(3px);
+  background: var(--background);
+  border-color: transparent;
+  box-shadow:
+    5px 5px 11px var(--neu-dark),
+    -5px -5px 11px var(--neu-light);
+}
+
+.glass-nav-active,
+.glass-nav-active:hover {
+  background: var(--accent);
+  border-color: transparent;
+  color: #ffffff;
+  transform: none;
+  box-shadow:
+    6px 6px 14px color-mix(in srgb, var(--accent) 42%, var(--neu-dark)),
+    -5px -5px 12px var(--neu-light);
+}
+
+/* popovers, menus, modals */
+.glass-popover {
+  background: var(--background);
+  border: 1px solid transparent;
+  box-shadow:
+    20px 20px 46px var(--neu-dark),
+    -16px -16px 38px var(--neu-light);
+}
+
+/* chips, badges, icon wells */
+.glass-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: var(--background);
+  border: 1px solid transparent;
+  box-shadow:
+    5px 5px 11px var(--neu-dark),
+    -5px -5px 11px var(--neu-light);
+}
+
+/* pressed well: avatars, icon holders, quoted content */
+.glass-inset {
+  background: var(--background);
+  border: 1px solid transparent;
+  box-shadow:
+    inset 4px 4px 9px var(--neu-dark),
+    inset -4px -4px 9px var(--neu-light);
+}
+
+.glass-divider {
+  border-top: 1px solid var(--border);
+}
+
+/* image / media frames inside raised cards */
+.glass-frame {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--neu-dark) 70%, transparent);
+}
+
+/* raised glass pill label (divider captions etc.) */
+.glass-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  background: var(--background);
+  border: 1px solid transparent;
+  box-shadow:
+    5px 5px 11px var(--neu-dark),
+    -5px -5px 11px var(--neu-light);
+}
+
+/* FAB */
+.glass-fab {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  border: 1px solid transparent;
+  box-shadow:
+    9px 9px 20px color-mix(in srgb, var(--accent) 45%, var(--neu-dark)),
+    -7px -7px 16px var(--neu-light);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.glass-fab:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow:
+    12px 12px 26px color-mix(in srgb, var(--accent) 52%, var(--neu-dark)),
+    -9px -9px 20px var(--neu-light);
+}
+
+.glass-fab:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow:
+    inset 4px 4px 10px color-mix(in srgb, #000 35%, transparent);
+}
+
+/* entrance for raised panels */
+@keyframes glass-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.glass-in {
+  animation: glass-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ---- page backdrop (soft neumorphic canvas) ---- */
+.glass-backdrop {
+  background: var(--background);
+}
+
+/* ---- floating color orbs (decorative, only on tinted panels) ---- */
+.glass-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.5;
+  pointer-events: none;
+  will-change: transform;
+  animation: glass-drift 18s ease-in-out infinite;
+}
+
+.glass-blob-2 {
+  animation-duration: 24s;
+  animation-delay: -7s;
+}
+
+.glass-blob-3 {
+  animation-duration: 30s;
+  animation-delay: -15s;
+}
+
+@keyframes glass-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(22px, -26px, 0) scale(1.08);
+  }
+}
+
+/* ---- auth hero panel (photo backdrop for the split-screen auth pages) ---- */
+.auth-hero {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.48) 55%, rgba(0, 0, 0, 0.38)),
+    url('/images/auth-hero.jpg') center / cover no-repeat;
 }

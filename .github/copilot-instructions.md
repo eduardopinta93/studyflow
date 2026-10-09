@@ -135,8 +135,8 @@ StudyFlow should have a clean, modern, academic productivity-focused appearance.
 
 ### Colors
 
-- Primary Indigo: `#4F46E5`
-- Primary Dark/Hover: `#4338CA`
+- Primary Azure: `#0078D4`
+- Primary Dark/Hover: `#005FB8`
 - Accent Sky Blue: `#0EA5E9`
 - Background: `#F8FAFC`
 - Surface/Card: `#FFFFFF`
