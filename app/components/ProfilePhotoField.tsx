@@ -1,18 +1,20 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { ImagePlus, Trash2, User } from 'lucide-react';
+import { ImagePlus, Trash2 } from 'lucide-react';
+import Avatar from './Avatar';
 
 type ProfilePhotoFieldProps = {
   value: string;
   onChange: (value: string) => void;
+  name?: string;
   disabled?: boolean;
 };
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-export default function ProfilePhotoField({ value, onChange, disabled = false }: ProfilePhotoFieldProps) {
+export default function ProfilePhotoField({ value, onChange, name, disabled = false }: ProfilePhotoFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
 
@@ -43,13 +45,7 @@ export default function ProfilePhotoField({ value, onChange, disabled = false }:
 
   return (
     <div className="flex items-center gap-4">
-      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[var(--accent)]/10 flex items-center justify-center shrink-0">
-        {value ? (
-          <img src={value} alt="Profile preview" className="w-full h-full object-cover" />
-        ) : (
-          <User className="text-[var(--accent)]" size={26} />
-        )}
-      </div>
+      <Avatar src={value || null} name={name} size={80} ring className="shadow-lg" />
       <div className="min-w-0 space-y-1.5">
         <div className="flex items-center gap-2">
           <button
@@ -68,14 +64,14 @@ export default function ProfilePhotoField({ value, onChange, disabled = false }:
               disabled={disabled}
               aria-label="Remove profile photo"
               title="Remove profile photo"
-              className="p-2 text-[var(--muted-foreground)] hover:text-[var(--destructive)] transition-colors disabled:opacity-50"
+              className="p-2 text-[var(--muted-foreground)] hover:text-[var(--destructive-text)] transition-colors disabled:opacity-50"
             >
               <Trash2 size={16} />
             </button>
           )}
         </div>
         <p className="text-xs text-[var(--muted-foreground)]">JPG, PNG, WebP, or GIF up to 2 MB</p>
-        {error && <p className="text-xs text-[var(--destructive)]">{error}</p>}
+        {error && <p className="text-xs text-[var(--destructive-text)]">{error}</p>}
       </div>
       <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileChange} className="hidden" />
     </div>

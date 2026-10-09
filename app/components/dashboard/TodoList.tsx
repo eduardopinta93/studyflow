@@ -40,7 +40,7 @@ export default function TodoList() {
   const doneCount = todos.filter((t) => t.done).length;
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 h-full flex flex-col">
+    <div className="glass rounded-[1.75rem] p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-[var(--foreground)]" style={{ fontFamily: 'var(--font-heading)' }}>
           To-Do
@@ -58,12 +58,12 @@ export default function TodoList() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="What do you need to do?"
-          className="flex-1 px-3 py-2 bg-[var(--background)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:border-[var(--accent)] transition-colors placeholder:text-[var(--muted-foreground)]/50"
+          className="glass-field flex-1 px-3.5 py-2 rounded-xl text-sm placeholder:text-[var(--muted-foreground)]/50"
         />
         <button
           type="submit"
           disabled={!input.trim()}
-          className="px-3 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:bg-[var(--accent-hover)] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          className="glass-btn glass-btn-primary px-3 py-2 rounded-xl text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <Plus size={16} />
         </button>
@@ -78,14 +78,14 @@ export default function TodoList() {
         {todos.map((todo) => (
           <div
             key={todo.id}
-            className="group flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--muted)] transition-colors"
+            className="group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--muted)] transition-colors"
           >
             <button
               onClick={() => toggle(todo.id)}
-              className={`w-[18px] h-[18px] rounded-md border flex items-center justify-center transition-all shrink-0 ${
+              className={`w-[19px] h-[19px] rounded-lg border flex items-center justify-center transition-all shrink-0 ${
                 todo.done
                   ? 'bg-[var(--accent)] border-[var(--accent)]'
-                  : 'border-[var(--border)] hover:border-[var(--accent)]'
+                  : 'bg-black/25 border border-white/15 hover:border-[var(--accent)] hover:bg-black/40'
               }`}
             >
               {todo.done && <Check size={11} className="text-white" strokeWidth={3} />}
@@ -96,7 +96,7 @@ export default function TodoList() {
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColors[todo.priority]}`} />
             <button
               onClick={() => remove(todo.id)}
-              className="opacity-0 group-hover:opacity-100 p-1 text-[var(--muted-foreground)] hover:text-[var(--destructive)] transition-all"
+              className="opacity-0 group-hover:opacity-100 p-1 text-[var(--muted-foreground)] hover:text-[var(--destructive-text)] transition-all"
             >
               <Trash2 size={13} />
             </button>

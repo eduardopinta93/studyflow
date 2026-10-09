@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
+import Image from 'next/image';
 import {
   Plus,
   X,
@@ -17,9 +18,11 @@ import {
 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
+import ThemeToggle from '../components/ThemeToggle';
 import CoursePickerModal from '../components/CoursePickerModal';
 import { getCourseImage } from '@/lib/course-image';
 import { GRADE_STYLES, type CourseGrade } from '@/lib/grade';
+import { useIsAdmin } from '@/lib/use-is-admin';
 
 interface Course {
   id: string;
@@ -34,7 +37,7 @@ interface Course {
 }
 
 const COLOR_PRESETS = [
-  '#4F46E5',
+  '#0078D4',
   '#0EA5E9',
   '#16A34A',
   '#F59E0B',
@@ -48,7 +51,7 @@ const COLOR_PRESETS = [
 
 export default function CoursesPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--background)]" />}>
+    <Suspense fallback={<div className="min-h-screen glass-backdrop" />}>
       <CoursesContent />
     </Suspense>
   );
@@ -57,6 +60,7 @@ export default function CoursesPage() {
 function CoursesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isAdmin = useIsAdmin();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -70,23 +74,21 @@ function CoursesContent() {
     code: '',
     term: '',
     notes: '',
-    color: '#4F46E5',
+    color: '#0078D4',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const fetchCourses = useCallback(async () => {
-    try {
-      const res = await fetch('/api/courses');
-      if (res.ok) {
-        const data = await res.json();
-        setCourses(data);
-      }
-    } catch {
-      console.error('Failed to fetch courses');
-    } finally {
-      setLoading(false);
-    }
+  const fetchCourses = useCallback(() => {
+    fetch('/api/courses')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data)) setCourses(data);
+      })
+      .catch(() => {
+        console.error('Failed to fetch courses');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -94,7 +96,7 @@ function CoursesContent() {
   }, [fetchCourses]);
 
   const resetForm = () => {
-    setFormData({ name: '', code: '', term: '', notes: '', color: '#4F46E5' });
+    setFormData({ name: '', code: '', term: '', notes: '', color: '#0078D4' });
     setEditingCourse(null);
     setError('');
   };
@@ -187,7 +189,7 @@ function CoursesContent() {
     });
 
   return (
-    <div className="flex min-h-screen bg-[var(--background)]">
+    <div className="flex min-h-screen glass-backdrop">
       <Sidebar />
       <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8">
         <div className="max-w-6xl mx-auto">
@@ -198,12 +200,15 @@ function CoursesContent() {
                 {courses.length} course{courses.length !== 1 ? 's' : ''} enrolled
               </p>
             </div>
-            <button
-              onClick={openAddModal}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[var(--accent)] text-white rounded-xl text-sm font-medium hover:bg-[var(--accent-hover)] transition-all shadow-sm w-full sm:w-auto justify-center"
-            >
-              <Plus size={16} /> Add Course
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={openAddModal}
+                className="flex items-center gap-2 px-4 py-2.5 bg-[var(--accent)] text-white rounded-xl text-sm font-medium hover:bg-[var(--accent-hover)] transition-all shadow-sm w-full sm:w-auto justify-center"
+              >
+                <Plus size={16} /> Add Course
+              </button>
+              <ThemeToggle />
+            </div>
           </div>
 
           {courses.length > 0 && (
@@ -215,7 +220,7 @@ function CoursesContent() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search courses..."
-                  className="w-full pl-9 pr-4 py-2.5 bg-[var(--card)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  className="w-full pl-9 pr-4 py-2.5 glass-field rounded-xl text-sm"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -223,7 +228,7 @@ function CoursesContent() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                  className="flex-1 sm:flex-none px-3 py-2.5 bg-[var(--card)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  className="flex-1 sm:flex-none px-3 py-2.5 glass-field rounded-xl text-sm"
                 >
                   <option value="createdAt">Newest</option>
                   <option value="name">Name</option>
@@ -239,7 +244,7 @@ function CoursesContent() {
               <p className="text-[var(--muted-foreground)] mt-4 text-sm">Loading courses...</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16 sm:py-20 bg-[var(--card)] border border-[var(--border)] rounded-2xl px-4">
+            <div className="text-center py-16 sm:py-20 glass rounded-[1.75rem] px-4">
               <BookOpen className="mx-auto text-[var(--muted-foreground)] mb-4" size={40} />
               <h3 className="text-lg sm:text-xl font-bold text-[var(--foreground)] mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
                 {search ? 'No courses found' : 'No courses yet'}
@@ -261,15 +266,17 @@ function CoursesContent() {
               {filtered.map((course) => (
                 <div
                   key={course.id}
-                  onClick={() => router.push(`/assignments?courseId=${course.id}`)}
-                  className="bg-[var(--card)] border border-[var(--border)] rounded-xl sm:rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer"
+                  onClick={() => router.push(`/courses/${course.id}`)}
+                  className="glass-flat rounded-xl sm:rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer"
                 >
                   {/* Course image */}
                   <div className="relative h-32 sm:h-36 overflow-hidden">
-                    <img
+                    <Image
                       src={getCourseImage(course.code)}
                       alt={course.name}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                      className="object-cover"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -281,22 +288,24 @@ function CoursesContent() {
                         </span>
                       )}
                     </div>
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openEditModal(course); }}
-                        className="p-1.5 bg-black/40 backdrop-blur-sm hover:bg-black/60 rounded-lg text-white transition-colors"
-                        title="Edit"
-                      >
-                        <Edit2 size={12} />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDeletingId(course.id); }}
-                        className="p-1.5 bg-black/40 backdrop-blur-sm hover:bg-red-500/80 rounded-lg text-white transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
+                    {isAdmin && (
+                      <div className="absolute top-2 right-2 flex gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openEditModal(course); }}
+                          className="p-1.5 bg-black/40 backdrop-blur-sm hover:bg-black/60 rounded-lg text-white transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeletingId(course.id); }}
+                          className="p-1.5 bg-black/40 backdrop-blur-sm hover:bg-red-500/80 rounded-lg text-white transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-4">
@@ -317,7 +326,7 @@ function CoursesContent() {
                       </p>
                     )}
 
-                    <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-[var(--border)]">
+                    <div className="flex items-center justify-between mt-3 pt-2.5 glass-divider">
                       <span className="text-xs text-[var(--muted-foreground)]">
                         {course._count?.assignments || 0} assignment{course._count?.assignments !== 1 ? 's' : ''}
                       </span>
@@ -344,9 +353,9 @@ function CoursesContent() {
         </div>
       </main>
 
-      {showModal && (
+      {isAdmin && showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 w-full sm:max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="glass-popover rounded-t-[1.75rem] sm:rounded-[1.75rem] p-5 sm:p-6 w-full sm:max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg sm:text-xl font-bold text-[var(--foreground)]" style={{ fontFamily: 'var(--font-heading)' }}>
                 Edit Course
@@ -362,13 +371,13 @@ function CoursesContent() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-1.5">
-                  Course Name <span className="text-[var(--destructive)]">*</span>
+                  Course Name <span className="text-[var(--destructive-text)]">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors"
+                  className="w-full px-3 py-2.5 glass-field rounded-xl text-sm"
                   placeholder="e.g. Introduction to Computer Science"
                   autoFocus
                   required
@@ -382,7 +391,7 @@ function CoursesContent() {
                     type="text"
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors font-mono"
+                    className="w-full px-3 py-2.5 glass-field rounded-xl text-sm font-mono"
                     placeholder="CS101"
                   />
                 </div>
@@ -392,7 +401,7 @@ function CoursesContent() {
                     type="text"
                     value={formData.term}
                     onChange={(e) => setFormData({ ...formData, term: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors"
+                    className="w-full px-3 py-2.5 glass-field rounded-xl text-sm"
                     placeholder="Fall 2026"
                   />
                 </div>
@@ -403,7 +412,7 @@ function CoursesContent() {
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors resize-none"
+                  className="w-full px-3 py-2.5 glass-field rounded-xl text-sm resize-none"
                   placeholder="Room number, instructor, schedule..."
                   rows={2}
                 />
@@ -431,7 +440,7 @@ function CoursesContent() {
               </div>
 
               {error && (
-                <div className="px-3 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-[var(--destructive)] text-sm">
+                <div className="px-3 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-[var(--destructive-text)] text-sm">
                   {error}
                 </div>
               )}
@@ -440,7 +449,7 @@ function CoursesContent() {
                 <button
                   type="button"
                   onClick={() => { setShowModal(false); resetForm(); }}
-                  className="flex-1 py-2.5 border border-[var(--border)] rounded-xl text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
+                  className="flex-1 py-2.5 glass-btn rounded-xl text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
                 >
                   Cancel
                 </button>
@@ -468,9 +477,9 @@ function CoursesContent() {
         onAdded={fetchCourses}
       />
 
-      {deletingId && (
+      {isAdmin && deletingId && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 w-full sm:max-w-sm shadow-2xl">
+          <div className="glass-popover rounded-t-[1.75rem] sm:rounded-[1.75rem] p-5 sm:p-6 w-full sm:max-w-sm shadow-2xl">
             <h3 className="text-lg font-bold text-[var(--foreground)] mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
               Delete Course?
             </h3>
@@ -480,7 +489,7 @@ function CoursesContent() {
             <div className="flex gap-3">
               <button
                 onClick={() => setDeletingId(null)}
-                className="flex-1 py-2.5 border border-[var(--border)] rounded-xl text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
+                className="flex-1 py-2.5 glass-btn rounded-xl text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] transition-colors"
               >
                 Cancel
               </button>

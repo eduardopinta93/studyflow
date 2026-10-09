@@ -25,7 +25,7 @@ async function main() {
       code: 'CS101',
       term: 'Fall 2026',
       notes: 'Mon/Wed 10:00-11:30, Room 204',
-      color: '#4F46E5',
+      color: '#0078D4',
     },
     {
       name: 'Calculus II',

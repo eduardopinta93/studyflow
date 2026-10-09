@@ -1,46 +1,48 @@
 # StudyFlow Color Scheme
 
-This is the planned color palette for the StudyFlow student task and course manager. The colors are documented here for reference and are not implemented yet.
+This is the implemented palette for the StudyFlow student portal. All values are defined as CSS custom properties in `app/globals.css`; components reference them through `var(--token)` so the whole app follows this scheme in light and dark mode.
 
-## Primary Colors
-
-| Name | Hex | Intended use |
-| --- | --- | --- |
-| Deep Blue | `#1D4ED8` | Primary buttons, links, and key actions |
-| Royal Blue | `#2563EB` | Hover states, highlights, and secondary emphasis |
-| Navy | `#1E3A8A` | Strong headings, dark panels, and contrast areas |
-
-## Secondary Colors
+## Primary Colors (Azure)
 
 | Name | Hex | Intended use |
 | --- | --- | --- |
-| Emerald Green | `#10B981` | Completed tasks, success messages, and positive progress |
-| Amber | `#F59E0B` | Upcoming deadlines, reminders, and attention states |
-| Sky Blue | `#BFDBFE` | Soft highlights, selected states, and visual accents |
+| Azure | `#0078D4` | Primary buttons, links, active nav, and key actions (light mode) |
+| Azure Pressed | `#005FB8` | Hover states for primary actions (light mode) |
+| Bright Azure | `#0099FF` | Primary actions and accents (dark mode) |
+| Bright Azure Pressed | `#007ACC` | Hover states for primary actions (dark mode) |
 
 ## Background Colors
 
-| Name | Hex | Intended use |
-| --- | --- | --- |
-| Main Background | `#F8FAFC` | Main application background |
-| Section Background | `#EFF6FF` | Hero areas and lightly emphasized sections |
-| Card Background | `#FFFFFF` | Cards, forms, lists, and content surfaces |
+| Name | Light | Dark | Intended use |
+| --- | --- | --- | --- |
+| Main Background | `#E8F3FC` | `#0A2333` | Page and card surfaces (azure-tinted, never neutral grey) |
+| Muted | `#D6EAF9` | `#123A54` | Hover rows, chips, pressed wells, badges |
+| Border | `#CCE4F7` | `#1B4A69` | Dividers, input outlines, hairlines |
+
+## Neumorphic Depth
+
+| Name | Light | Dark | Intended use |
+| --- | --- | --- | --- |
+| Light shadow | `#FFFFFF` | `#1E5173` | Upper-left highlight of raised surfaces |
+| Dark shadow | `#B5D2EA` | `#04121D` | Lower-right shade of raised surfaces |
 
 ## Text Colors
 
-| Name | Hex | Intended use |
-| --- | --- | --- |
-| Primary Text | `#0F172A` | Main headings and important content |
-| Secondary Text | `#475569` | Body text and supporting information |
-| Muted Text | `#64748B` | Metadata, labels, and less prominent details |
-| Text on Dark Backgrounds | `#FFFFFF` | Text displayed over blue or navy surfaces |
+| Name | Light | Dark | Intended use |
+| --- | --- | --- | --- |
+| Primary Text | `#0F3A5E` | `#E3F2FD` | Main headings and important content |
+| Muted Text | `#3B6B96` | `#8FB6D4` | Labels, metadata, and supporting information |
+| On Accent | `#FFFFFF` | `#FFFFFF` | Text over azure buttons and nav highlights |
 
 ## Status and Interface Colors
 
-| Name | Hex | Intended use |
-| --- | --- | --- |
-| Completed / Success | `#10B981` | Completed assignments and successful actions |
-| Upcoming / Attention | `#F59E0B` | Approaching deadlines and items needing attention |
-| Overdue / Error | `#DC2626` | Overdue assignments and validation errors |
-| Informational | `#2563EB` | Notices and general information |
-| Borders | `#CBD5E1` | Card borders, dividers, and input outlines |
+| Name | Light | Dark | Intended use |
+| --- | --- | --- | --- |
+| Completed / Success | `#16A34A` | `#4ADE80` | Completed assignments and success messages |
+| Upcoming / Attention | `#F59E0B` | `#FBBF24` | Approaching deadlines and reminders |
+| Overdue / Error | `#DC2626` | `#F87171` | Overdue items and validation errors |
+| Sky | `#0EA5E9` | `#38BDF8` | Secondary informational accents |
+
+## Auth Hero Panel
+
+The split-screen auth pages use `public/images/auth-hero.jpg` beneath an azure gradient overlay (`rgba(0,58,105,0.86)` → `rgba(0,133,214,0.72)`) with radial azure glows, defined by `.auth-hero` in `app/globals.css`.

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GraduationCap, BookOpen, Target } from 'lucide-react';
 import ProfilePhotoField from '../../components/ProfilePhotoField';
 
 export default function CompleteProfilePage() {
   const router = useRouter();
+  const [fullName, setFullName] = useState('');
   const [formData, setFormData] = useState({
     major: '',
     year: '',
@@ -15,6 +16,15 @@ export default function CompleteProfilePage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user?.name) setFullName(data.user.name);
+      })
+      .catch(() => undefined);
+  }, []);
 
   const majors = [
     'Computer Science', 'Software Engineering', 'Data Science', 'Information Technology',
@@ -56,7 +66,7 @@ export default function CompleteProfilePage() {
           <p className="text-[var(--muted-foreground)]">Help us personalize your StudyFlow experience</p>
         </div>
 
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8">
+        <div className="glass rounded-2xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="flex items-center gap-2 text-sm font-medium mb-3">
@@ -99,10 +109,10 @@ export default function CompleteProfilePage() {
 
             <div>
               <label className="text-sm font-medium mb-3 block">Profile photo (optional)</label>
-              <ProfilePhotoField value={formData.avatarUrl} onChange={(avatarUrl) => setFormData({ ...formData, avatarUrl })} disabled={loading} />
+              <ProfilePhotoField value={formData.avatarUrl} name={fullName} onChange={(avatarUrl) => setFormData({ ...formData, avatarUrl })} disabled={loading} />
             </div>
 
-            {error && <p className="text-sm text-[var(--destructive)]" role="alert">{error}</p>}
+            {error && <p className="text-sm text-[var(--destructive-text)]" role="alert">{error}</p>}
             <button type="submit" disabled={loading} className="w-full py-3 bg-[var(--accent)] text-white rounded-xl font-medium hover:opacity-90 transition-all duration-200 disabled:opacity-50">
               {loading ? 'Saving...' : 'Complete Profile'}
             </button>

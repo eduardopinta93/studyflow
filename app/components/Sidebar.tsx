@@ -4,14 +4,29 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { Home, BookOpen, ClipboardList, ListTodo, Mail, Settings, Menu, X, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard,
+  CalendarDays,
+  BookOpen,
+  ClipboardList,
+  GraduationCap,
+  ListTodo,
+  Mail,
+  Settings,
+  Menu,
+  X,
+  LogOut,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import QuickAddFab from './QuickAddFab';
+import Avatar from './Avatar';
 
 const navItems = [
-  { label: 'Dashboard', href: '/', icon: Home },
+  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Calendar', href: '/calendar', icon: CalendarDays },
   { label: 'Courses', href: '/courses', icon: BookOpen },
   { label: 'Assignments', href: '/assignments', icon: ClipboardList },
+  { label: 'Grades', href: '/grades', icon: GraduationCap },
   { label: 'To-dos', href: '/todos', icon: ListTodo },
   { label: 'Inbox', href: '/inbox', icon: Mail },
   { label: 'Settings', href: '/settings', icon: Settings },
@@ -48,11 +63,14 @@ export default function Sidebar() {
     };
   }, [session?.user, pathname]);
 
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
+
   return (
     <>
       <button
         onClick={() => setOpen(!open)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[var(--card)] border border-[var(--border)] rounded-lg shadow-sm"
+        className="glass-btn lg:hidden fixed top-4 left-4 z-50 p-2.5 rounded-xl"
         aria-label="Toggle menu"
       >
         {open ? <X size={18} /> : <Menu size={18} />}
@@ -66,29 +84,37 @@ export default function Sidebar() {
       )}
 
       <aside
-        className={`fixed left-0 top-0 h-full w-60 bg-[var(--card)] border-r border-[var(--border)] z-40 transition-transform duration-200 ease-out lg:translate-x-0 flex flex-col ${
+        className={`glass-nav fixed left-0 top-0 h-full w-60 rounded-r-[2rem] z-40 transition-transform duration-200 ease-out lg:translate-x-0 flex flex-col ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-[var(--border)]">
+        <div className="flex items-center gap-2.5 px-5 py-5 glass-divider">
           <Image src="/logo.png" alt="" width={32} height={32} className="w-8 h-8 rounded-lg" />
-          <span className="text-base font-bold text-[var(--foreground)] tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-            StudyFlow
-          </span>
+          <div className="min-w-0">
+            <span
+              className="block text-base font-bold text-[var(--foreground)] tracking-tight leading-tight"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              StudyFlow
+            </span>
+            <span className="block text-[10px] uppercase tracking-[0.14em] font-semibold text-[var(--muted-foreground)]">
+              Student Portal
+            </span>
+          </div>
         </div>
 
-        <nav className="p-3 space-y-0.5 flex-1 overflow-y-auto">
+        <nav className="p-3 space-y-0.5 flex-1 overflow-y-auto scrollbar-thin">
           {navItems.map((item) => {
-            const active = pathname === item.href;
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`glass-nav-item flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium ${
                   active
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]'
+                    ? 'glass-nav-active'
+                    : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
                 }`}
               >
                 <item.icon size={16} />
@@ -104,22 +130,18 @@ export default function Sidebar() {
         </nav>
 
         {session?.user && (
-          <div className="p-3 border-t border-[var(--border)]">
+          <div className="p-3 glass-divider">
             <Link
               href="/profile"
               onClick={() => setOpen(false)}
               title="View profile"
-              className="flex items-center gap-3 px-3 py-2 mb-1 min-w-0 rounded-lg hover:bg-[var(--muted)] transition-colors"
+              className="glass-nav-item flex items-center gap-3 px-3 py-2 mb-1 min-w-0 rounded-xl"
             >
-              <div className="w-9 h-9 rounded-full overflow-hidden bg-[var(--accent)]/10 flex items-center justify-center shrink-0">
-                {session.user.avatarUrl ? (
-                  <img src={session.user.avatarUrl} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-sm font-semibold text-[var(--accent)]">
-                    {(session.user.name ?? session.user.email ?? 'S').charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </div>
+              <Avatar
+                src={session.user.avatarUrl}
+                name={session.user.name ?? session.user.email}
+                size={36}
+              />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-[var(--foreground)] truncate">
                   {session.user.name}
@@ -131,7 +153,7 @@ export default function Sidebar() {
             </Link>
             <button
               onClick={() => signOut({ redirectTo: '/auth/login' })}
-              className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+              className="glass-nav-item flex w-full items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
             >
               <LogOut size={16} />
               Sign out

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { auth, isAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 async function getUserId(): Promise<string | null> {
@@ -7,15 +7,17 @@ async function getUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const userId = await getUserId();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const courseId = request.nextUrl.searchParams.get('courseId');
+
     const assignments = await db.assignment.findMany({
-      where: { userId },
+      where: { userId, ...(courseId ? { courseId } : {}) },
       include: { course: true },
       orderBy: { dueDate: 'asc' },
     });
@@ -32,6 +34,10 @@ export async function POST(request: NextRequest) {
     const userId = await getUserId();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!(await isAdmin())) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     const body = await request.json();

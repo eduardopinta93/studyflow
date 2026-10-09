@@ -22,7 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
         <style>{`
@@ -30,8 +31,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             --font-heading: 'Inter', system-ui, sans-serif;
           }
         `}</style>
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('sf-theme');var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',!!d);}catch(e){document.documentElement.classList.remove('dark');}})();`,
+          }}
+        />
       </head>
-      <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]">
+      <body
+        className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)] relative"
+        suppressHydrationWarning
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

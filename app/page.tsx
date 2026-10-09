@@ -3,9 +3,12 @@
 import Sidebar from './components/Sidebar';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { BookOpen, Calendar, Hash, StickyNote } from 'lucide-react';
 import { getCourseImage } from '@/lib/course-image';
 import { GRADE_STYLES, type CourseGrade } from '@/lib/grade';
+import UpcomingDeadlines from './components/dashboard/UpcomingDeadlines';
+import ThemeToggle from './components/ThemeToggle';
 
 interface Course {
   id: string;
@@ -19,19 +22,33 @@ interface Course {
   grade: CourseGrade | null;
 }
 
+interface Assignment {
+  id: string;
+  title: string;
+  dueDate: string;
+  type: string;
+  completed: boolean;
+  course: { name: string };
+}
+
 export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchCourses = useCallback(async () => {
-    try {
-      const res = await fetch('/api/courses');
-      if (res.ok) setCourses(await res.json());
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
+  const fetchCourses = useCallback(() => {
+    Promise.all([
+      fetch('/api/courses').then((res) => (res.ok ? res.json() : null)),
+      fetch('/api/assignments').then((res) => (res.ok ? res.json() : null)),
+    ])
+      .then(([coursesData, assignmentsData]) => {
+        if (Array.isArray(coursesData)) setCourses(coursesData);
+        if (Array.isArray(assignmentsData)) setAssignments(assignmentsData);
+      })
+      .catch(() => {
+        // silent
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -40,33 +57,51 @@ export default function Home() {
     return () => clearInterval(i);
   }, [fetchCourses]);
 
+  const deadlines = assignments
+    .filter((a) => !a.completed)
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+    .slice(0, 8)
+    .map((a) => ({
+      id: a.id,
+      title: a.title,
+      course: a.course.name,
+      dueDate: a.dueDate,
+      type: a.type as 'assignment' | 'exam' | 'project' | 'quiz',
+    }));
+
   return (
-    <div className="flex min-h-screen bg-[var(--background)]">
+    <div className="flex min-h-screen glass-backdrop">
       <Sidebar />
-      <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 lg:ml-64 p-4 sm:p-6 lg:p-8 relative z-10">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-6 sm:mb-8 pt-12 lg:pt-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--foreground)]" style={{ fontFamily: 'var(--font-heading)' }}>
-              Dashboard
-            </h1>
-            <p className="text-sm text-[var(--muted-foreground)] mt-1">
-              {loading
-                ? 'Loading...'
-                : courses.length === 0
-                  ? 'Add a course to get started'
-                  : `${courses.length} course${courses.length !== 1 ? 's' : ''} on your dashboard`}
-            </p>
+          <div className="mb-6 sm:mb-8 pt-12 lg:pt-0 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-[var(--foreground)]" style={{ fontFamily: 'var(--font-heading)' }}>
+                Dashboard
+              </h1>
+              <p className="text-sm text-[var(--muted-foreground)] mt-1">
+                {loading
+                  ? 'Loading...'
+                  : courses.length === 0
+                    ? 'Add a course to get started'
+                    : `${courses.length} course${courses.length !== 1 ? 's' : ''} on your dashboard`}
+              </p>
+            </div>
+            <ThemeToggle />
           </div>
 
-          <div className="mt-5 sm:mt-6">
+          <div className="mt-5 sm:mt-6 grid grid-cols-1 xl:grid-cols-4 gap-5">
+            <div className="xl:col-span-3">
             {loading ? (
               <div className="text-center py-20">
                 <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto" />
                 <p className="text-[var(--muted-foreground)] mt-4 text-sm">Loading courses...</p>
               </div>
             ) : courses.length === 0 ? (
-              <div className="text-center py-16 sm:py-20 bg-[var(--card)] border border-[var(--border)] rounded-2xl px-4">
-                <BookOpen className="mx-auto text-[var(--muted-foreground)] mb-4" size={40} />
+              <div className="text-center py-16 sm:py-20 glass rounded-[2rem] px-4">
+                <div className="glass-inset w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5">
+                  <BookOpen className="text-[var(--accent)]" size={34} />
+                </div>
                 <h3 className="text-lg sm:text-xl font-bold text-[var(--foreground)] mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
                   No courses yet
                 </h3>
@@ -79,14 +114,16 @@ export default function Home() {
                 {courses.map((course) => (
                   <Link
                     key={course.id}
-                    href={`/assignments?courseId=${course.id}`}
-                    className="bg-[var(--card)] border border-[var(--border)] rounded-xl sm:rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-200 cursor-pointer"
+                    href={`/courses/${course.id}`}
+                    className="glass-flat glass-hover glass-sheen rounded-[1.75rem] overflow-hidden cursor-pointer block"
                   >
                     <div className="relative h-32 sm:h-36 overflow-hidden">
-                      <img
+                      <Image
                         src={getCourseImage(course.code)}
                         alt={course.name}
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                        className="object-cover"
                         loading="lazy"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -117,7 +154,7 @@ export default function Home() {
                         </p>
                       )}
 
-                      <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-[var(--border)]">
+                      <div className="flex items-center justify-between mt-3 pt-2.5 glass-divider">
                         <span className="text-xs text-[var(--muted-foreground)]">
                           {course._count?.assignments || 0} assignment{course._count?.assignments !== 1 ? 's' : ''}
                         </span>
@@ -141,6 +178,12 @@ export default function Home() {
                 ))}
               </div>
             )}
+            </div>
+            <aside className="xl:col-span-1">
+              <div className="xl:sticky xl:top-6">
+                <UpcomingDeadlines deadlines={deadlines} />
+              </div>
+            </aside>
           </div>
         </div>
       </main>
