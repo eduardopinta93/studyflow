@@ -13,6 +13,7 @@ import {
   ListTodo,
   Mail,
   Settings,
+  ShieldCheck,
   Menu,
   X,
   LogOut,
@@ -21,7 +22,7 @@ import { useEffect, useState } from 'react';
 import QuickAddFab from './QuickAddFab';
 import Avatar from './Avatar';
 
-const navItems = [
+const studentNavItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Calendar', href: '/calendar', icon: CalendarDays },
   { label: 'Courses', href: '/courses', icon: BookOpen },
@@ -32,11 +33,19 @@ const navItems = [
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
+const adminNavItems = [
+  { label: 'Admin', href: '/admin', icon: ShieldCheck },
+  { label: 'Inbox', href: '/inbox', icon: Mail },
+  { label: 'Settings', href: '/settings', icon: Settings },
+];
+
 export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'ADMIN';
+  const navItems = isAdmin ? adminNavItems : studentNavItems;
 
   useEffect(() => {
     if (!session?.user) return;
@@ -162,7 +171,7 @@ export default function Sidebar() {
         )}
       </aside>
 
-      <QuickAddFab />
+      {!isAdmin && <QuickAddFab />}
     </>
   );
 }

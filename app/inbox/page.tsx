@@ -87,9 +87,10 @@ export default function InboxPage() {
   }, [box, fetchMessages]);
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('compose') === '1') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('compose') === '1') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      openCompose();
+      openCompose({ recipientId: params.get('to') ?? undefined });
     }
   }, []);
 
