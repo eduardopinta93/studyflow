@@ -27,10 +27,10 @@ interface Assignment {
 }
 
 const typeColors: Record<string, string> = {
-  assignment: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  exam: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  project: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  quiz: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  assignment: 'text-blue-700 dark:text-blue-400',
+  exam: 'text-red-700 dark:text-red-400',
+  project: 'text-purple-700 dark:text-purple-400',
+  quiz: 'text-amber-700 dark:text-amber-400',
 };
 
 const priorityColors: Record<string, string> = {
@@ -230,31 +230,18 @@ export default function CourseAssignmentsPage() {
               key={a.id}
               className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 glass-flat rounded-2xl hover:shadow-md transition-all"
             >
-              {isAdmin ? (
-                <button
-                  onClick={() => toggle(a)}
-                  title={a.completed ? 'Mark as not done' : `Mark done and earn ${a.points} points`}
-                  className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
-                    a.completed
-                      ? 'bg-[var(--success)] border-[var(--success)] text-white'
-                      : 'border-white/15 text-[var(--muted-foreground)] hover:border-[var(--success)] hover:text-[var(--success)]'
-                  }`}
-                >
-                  {a.completed ? <Check size={12} /> : null}
-                  {a.completed ? 'Done' : 'Mark done'}
-                </button>
-              ) : (
-                <span
-                  className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border-2 ${
-                    a.completed
-                      ? 'bg-[var(--success)] border-[var(--success)] text-white'
-                      : 'border-white/15 text-[var(--muted-foreground)]'
-                  }`}
-                >
-                  {a.completed ? <Check size={12} /> : null}
-                  {a.completed ? 'Done' : 'Not done'}
-                </span>
-              )}
+              <button
+                onClick={() => toggle(a)}
+                title={a.completed ? 'Mark as not done' : `Mark done and earn ${a.points} points`}
+                className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all ${
+                  a.completed
+                    ? 'bg-[var(--success)] border-[var(--success)] text-white'
+                    : 'border-white/15 text-[var(--muted-foreground)] hover:border-[var(--success)] hover:text-[var(--success)]'
+                }`}
+              >
+                {a.completed ? <Check size={12} /> : null}
+                {a.completed ? 'Done' : 'Mark done'}
+              </button>
               <div className="flex-1 min-w-0">
                 <p
                   className={`text-sm font-medium text-[var(--foreground)] ${
@@ -270,8 +257,8 @@ export default function CourseAssignmentsPage() {
               <span
                 className={`text-xs font-bold px-2 py-1 rounded-lg shrink-0 ${
                   a.completed
-                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                    : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-[var(--muted-foreground)]'
                 }`}
               >
                 {a.completed ? `+${a.points}` : `${a.points} pts`}
@@ -466,7 +453,7 @@ export default function CourseAssignmentsPage() {
                   >
                     {viewing.type}
                   </span>
-                  <span className="text-xs font-bold px-2 py-1 rounded-lg bg-[var(--muted)] text-[var(--muted-foreground)]">
+                  <span className="text-xs font-bold px-2 py-1 rounded-lg text-[var(--muted-foreground)]">
                     {viewing.points} pts
                   </span>
                 </div>

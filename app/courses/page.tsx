@@ -340,8 +340,8 @@ function CoursesContent() {
                           </span>
                         )}
                         <div
-                          className="w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm"
-                          style={{ backgroundColor: course.color }}
+                          className="w-3.5 h-3.5 rounded-full border-2 shadow-sm"
+                          style={{ borderColor: course.color }}
                         />
                       </div>
                     </div>

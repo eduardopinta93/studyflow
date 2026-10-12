@@ -574,3 +574,15 @@ body {
     linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.48) 55%, rgba(0, 0, 0, 0.38)),
     url('/images/auth-hero.jpg') center / cover no-repeat;
 }
+
+/* ============================================================
+   Overlights removed — the light-glow half of every neumorphic
+   shadow (--neu-light) is transparent in both themes. The shade
+   shadows (--neu-dark) remain, so glass surfaces keep their
+   depth; only the light halo over card edges is gone.
+   ============================================================ */
+*,
+*::before,
+*::after {
+  --neu-light: transparent;
+}

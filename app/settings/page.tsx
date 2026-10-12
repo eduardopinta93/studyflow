@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import Sidebar from '../components/Sidebar';
 import ThemeToggle from '../components/ThemeToggle';
 import ProfilePhotoField from '../components/ProfilePhotoField';
-import { Sun, Moon, Monitor, Bell, BellOff, Trash2, Download } from 'lucide-react';
+import { Sun, Moon, Monitor, Bell, BellOff, Trash2, Download, Lock } from 'lucide-react';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -43,6 +43,12 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -84,6 +90,40 @@ export default function SettingsPage() {
       setAvatarError('Could not update your profile photo.');
     } finally {
       setAvatarSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess(false);
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match.');
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      const response = await fetch('/api/profile/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) {
+        setPasswordError(result?.error ?? 'Could not change your password.');
+      } else {
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setPasswordSuccess(true);
+        setTimeout(() => setPasswordSuccess(false), 3000);
+      }
+    } catch {
+      setPasswordError('Could not change your password.');
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -178,6 +218,76 @@ export default function SettingsPage() {
                 </div>
               </div>
               {avatarError && <p className="text-xs text-[var(--destructive-text)] mt-3" role="alert">{avatarError}</p>}
+            </section>
+
+            {/* Security */}
+            <section className="glass rounded-[1.75rem] p-5 sm:p-6">
+              <h2 className="text-sm font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-4">Security</h2>
+              <form onSubmit={handleChangePassword} className="space-y-3">
+                <div>
+                  <label htmlFor="current-password" className="block text-xs font-medium text-[var(--muted-foreground)] mb-1">
+                    Current password
+                  </label>
+                  <input
+                    id="current-password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                    className="w-full px-3 py-2.5 rounded-xl bg-[var(--muted)] border border-[var(--border)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="new-password" className="block text-xs font-medium text-[var(--muted-foreground)] mb-1">
+                      New password
+                    </label>
+                    <input
+                      id="new-password"
+                      type="password"
+                      autoComplete="new-password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className="w-full px-3 py-2.5 rounded-xl bg-[var(--muted)] border border-[var(--border)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      placeholder="At least 8 characters"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="confirm-password" className="block text-xs font-medium text-[var(--muted-foreground)] mb-1">
+                      Confirm new password
+                    </label>
+                    <input
+                      id="confirm-password"
+                      type="password"
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className="w-full px-3 py-2.5 rounded-xl bg-[var(--muted)] border border-[var(--border)] text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      placeholder="Repeat new password"
+                    />
+                  </div>
+                </div>
+                {passwordError && (
+                  <p className="text-xs text-[var(--destructive-text)]" role="alert">{passwordError}</p>
+                )}
+                {passwordSuccess && (
+                  <p className="text-xs text-[var(--success)]" role="status">Password changed successfully.</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={passwordSaving}
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-[var(--accent)] text-white rounded-xl text-sm font-medium hover:opacity-90 transition-all disabled:opacity-60"
+                >
+                  <Lock size={14} />
+                  {passwordSaving ? 'Changing…' : 'Change password'}
+                </button>
+              </form>
             </section>
 
             {/* Appearance */}

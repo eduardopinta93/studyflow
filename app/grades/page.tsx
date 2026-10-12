@@ -73,7 +73,7 @@ export default function GradesPage() {
               className={`text-4xl font-black px-4 py-2 rounded-2xl ${
                 overallLetter
                   ? GRADE_STYLES[overallLetter]
-                  : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+                  : 'text-[var(--muted-foreground)]'
               }`}
             >
               {overallLetter ?? '—'}
@@ -136,7 +136,7 @@ export default function GradesPage() {
                       </div>
                       <span
                         className={`text-2xl font-black px-2.5 py-1 rounded-xl shrink-0 ${
-                          g ? GRADE_STYLES[g.letter] : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+                          g ? GRADE_STYLES[g.letter] : 'text-[var(--muted-foreground)]'
                         }`}
                         title={g ? `${g.earned}/${g.possible} points` : 'No graded work yet'}
                       >

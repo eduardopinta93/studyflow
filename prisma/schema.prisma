@@ -17,6 +17,14 @@ model User {
   year       String?
   studyGoal  String?
   avatarUrl  String?
+  headline   String?
+  bio        String?
+  skills     String?
+  location   String?
+  whatsappPhone String?
+  website    String?
+  linkedinUrl String?
+  githubUrl  String?
   categoryId String?  @db.ObjectId
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

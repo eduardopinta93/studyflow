@@ -42,10 +42,10 @@ interface CourseDetail {
 }
 
 const typeColors: Record<string, string> = {
-  assignment: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  exam: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  project: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  quiz: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  assignment: 'text-blue-700 dark:text-blue-400',
+  exam: 'text-red-700 dark:text-red-400',
+  project: 'text-purple-700 dark:text-purple-400',
+  quiz: 'text-amber-700 dark:text-amber-400',
 };
 
 function dueLabel(date: string) {

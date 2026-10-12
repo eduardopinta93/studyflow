@@ -17,13 +17,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!(await isAdmin())) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
     const { assignmentId } = await params;
-    const body = await request.json();
-    const { title, description, content, points, dueDate, completed, type, priority, courseId } = body;
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+    const admin = await isAdmin();
 
     const existing = await db.assignment.findFirst({
       where: { id: assignmentId, userId },
@@ -32,6 +31,21 @@ export async function PATCH(
     if (!existing) {
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
     }
+
+    if (!admin) {
+      // Owners may only toggle completion on their own assignment;
+      // everything else (title, points, due date, course) stays admin-only.
+      const keys = Object.keys(body);
+      const completionOnly =
+        keys.length === 1 &&
+        keys[0] === 'completed' &&
+        typeof body.completed === 'boolean';
+      if (!completionOnly) {
+        return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      }
+    }
+
+    const { title, description, content, points, dueDate, completed, type, priority, courseId } = body;
 
     if (title !== undefined) {
   if (typeof title !== 'string' || title.trim().length === 0) {

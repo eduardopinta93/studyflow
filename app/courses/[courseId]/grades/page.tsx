@@ -75,7 +75,7 @@ export default function CourseGradesPage() {
         <div className="flex items-center gap-5 flex-wrap">
           <div
             className={`text-4xl font-black px-4 py-2 rounded-2xl ${
-              grade ? GRADE_STYLES[grade.letter] : 'bg-[var(--muted)] text-[var(--muted-foreground)]'
+              grade ? GRADE_STYLES[grade.letter] : 'text-[var(--muted-foreground)]'
             }`}
           >
             {grade ? grade.letter : '—'}
