@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { auth, isAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 async function getUserId(): Promise<string | null> {
@@ -70,6 +70,10 @@ export async function PATCH(
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!(await isAdmin())) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     const { courseId } = await params;
@@ -164,7 +168,6 @@ export async function DELETE(
     const existing = await db.course.findFirst({
       where: {
         id: courseId,
-        userId,
       },
     });
 
@@ -175,10 +178,43 @@ export async function DELETE(
       );
     }
 
+    if (existing.userId !== userId && !(await isAdmin())) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
+    await db.assignment.deleteMany({
+      where: { courseId },
+    });
+    await db.announcement.deleteMany({
+      where: { courseId },
+    });
+
+    const topics = await db.discussionTopic.findMany({
+      where: { courseId },
+      select: { id: true },
+    });
+    const topicIds = topics.map((t) => t.id);
+    if (topicIds.length > 0) {
+      const entries = await db.discussionEntry.findMany({
+        where: { topicId: { in: topicIds } },
+        select: { id: true },
+      });
+      const entryIds = entries.map((e) => e.id);
+      if (entryIds.length > 0) {
+        await db.discussionEntry.updateMany({
+          where: { id: { in: entryIds } },
+          data: { parentId: null },
+        });
+      }
+      await db.discussionEntry.deleteMany({
+        where: { topicId: { in: topicIds } },
+      });
+    }
+    await db.discussionTopic.deleteMany({
+      where: { courseId },
+    });
     await db.course.delete({
-      where: {
-        id: courseId,
-      },
+      where: { id: courseId },
     });
 
     return NextResponse.json({

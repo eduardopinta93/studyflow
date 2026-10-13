@@ -143,7 +143,7 @@ function PickerBody({ onClose, onAdded }: Omit<CoursePickerModalProps, 'open'>) 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 w-full sm:max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+      <div className="glass-popover rounded-t-2xl sm:rounded-2xl p-5 sm:p-6 w-full sm:max-w-lg max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg sm:text-xl font-bold" style={{ fontFamily: 'var(--font-heading)' }}>
@@ -165,7 +165,7 @@ function PickerBody({ onClose, onAdded }: Omit<CoursePickerModalProps, 'open'>) 
         </div>
 
         {error && (
-          <div className="mb-4 px-3 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-[var(--destructive)] text-sm">
+          <div className="mb-4 px-3 py-2.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-[var(--destructive-text)] text-sm">
             {error}
           </div>
         )}
@@ -209,7 +209,7 @@ function PickerBody({ onClose, onAdded }: Omit<CoursePickerModalProps, 'open'>) 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search existing courses..."
-                className="w-full pl-9 pr-4 py-2.5 bg-[var(--background)] border border-[var(--border)] rounded-xl text-sm focus:outline-none focus:border-[var(--accent)] transition-colors"
+                className="w-full pl-9 pr-4 py-2.5 glass-field rounded-xl text-sm"
                 autoFocus
               />
             </div>
@@ -242,8 +242,8 @@ function PickerBody({ onClose, onAdded }: Omit<CoursePickerModalProps, 'open'>) 
                               added
                                 ? 'border-[var(--border)] bg-[var(--muted)] opacity-70'
                                 : exceeds
-                                  ? 'border-[var(--border)] bg-[var(--card)] opacity-50 cursor-not-allowed'
-                                  : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--accent)]'
+                                  ? 'border-[var(--border)] bg-[var(--muted)] opacity-50 cursor-not-allowed'
+                                  : 'border-[var(--border)] bg-[var(--muted)] hover:border-[var(--accent)]'
                             }`}
                           >
                             <div className="flex-1 min-w-0">
@@ -261,7 +261,7 @@ function PickerBody({ onClose, onAdded }: Omit<CoursePickerModalProps, 'open'>) 
                             </div>
                             {added ? (
                               finished ? (
-                                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 shrink-0">
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--success-text)] shrink-0">
                                   <CheckCircle2 size={13} /> Finished
                                 </span>
                               ) : (

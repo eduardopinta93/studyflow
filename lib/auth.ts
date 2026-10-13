@@ -9,7 +9,7 @@ import { verifyPassword } from '@/lib/password';
 
 declare module 'next-auth' {
   interface Session {
-    user: { id: string; avatarUrl?: string | null } & DefaultSession['user'];
+    user: { id: string; avatarUrl?: string | null; role: 'ADMIN' | 'USER' } & DefaultSession['user'];
   }
 }
 
@@ -42,10 +42,14 @@ const providers: NextAuthConfig['providers'] = [
   }),
 ];
 
-// Google and GitHub are always registered so their sign-in buttons stay visible;
-// they start working once AUTH_GOOGLE_* / AUTH_GITHUB_* credentials are set in .env
-providers.push(Google, GitHub);
+if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) providers.push(Google);
+if (process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET) providers.push(GitHub);
 if (process.env.AUTH_AZURE_AD_ID && process.env.AUTH_AZURE_AD_SECRET) providers.push(AzureAD);
+
+function isAdminEmail(email?: string | null): boolean {
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  return !!adminEmail && !!email && email.trim().toLowerCase() === adminEmail;
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers,
@@ -80,8 +84,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const id = typeof token.id === 'string' ? token.id : token.sub;
       if (session.user && id) {
         session.user.id = id;
-        const user = await db.user.findUnique({ where: { id }, select: { avatarUrl: true } });
+        const user = await db.user.findUnique({
+          where: { id },
+          select: { avatarUrl: true, role: true },
+        });
         session.user.avatarUrl = user?.avatarUrl ?? null;
+        session.user.role =
+          user?.role === 'ADMIN' || isAdminEmail(session.user.email) ? 'ADMIN' : 'USER';
       }
       return session;
     },
@@ -92,4 +101,11 @@ export async function getSessionUserId(): Promise<string | null> {
   const session = await auth();
   const id = session?.user?.id;
   return id ?? null;
+}
+
+export async function isAdmin(): Promise<boolean> {
+  const session = await auth();
+  if (!session?.user?.id) return false;
+  if (session.user.role === 'ADMIN') return true;
+  return isAdminEmail(session.user.email);
 }

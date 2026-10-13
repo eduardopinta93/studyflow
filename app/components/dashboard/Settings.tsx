@@ -8,7 +8,7 @@ interface SettingsProps {
 }
 
 export default function Settings({ onClose }: SettingsProps) {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
   const [notifications, setNotifications] = useState(true);
   const [emailDigest, setEmailDigest] = useState(false);
 
@@ -25,7 +25,7 @@ export default function Settings({ onClose }: SettingsProps) {
   };
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6">
+    <div className="glass rounded-2xl p-6">
       <h2 className="text-lg font-bold mb-6" style={{ fontFamily: 'var(--font-heading)' }}>Settings</h2>
 
       <div className="space-y-6">

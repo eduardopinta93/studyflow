@@ -112,7 +112,7 @@ export default function OnboardingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+      <div className="min-h-screen glass-backdrop flex items-center justify-center">
         <p className="text-[var(--muted-foreground)]">Loading study categories…</p>
       </div>
     );
@@ -120,9 +120,9 @@ export default function OnboardingPage() {
 
   if (enrolledCategoryId) {
     return (
-      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-8">
-        <div className="w-full max-w-md bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 text-center">
-          <div className="w-16 h-16 bg-[var(--accent)]/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <div className="min-h-screen glass-backdrop flex items-center justify-center p-8">
+        <div className="w-full max-w-md glass rounded-[1.75rem] p-8 text-center">
+          <div className="w-16 h-16 glass-inset rounded-2xl flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="text-[var(--accent)]" size={32} />
           </div>
           <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
@@ -145,7 +145,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)]">
+    <div className="min-h-screen glass-backdrop">
       <div className="max-w-3xl mx-auto p-6 sm:p-10">
         <div className="flex items-center gap-3 mb-8">
           <Image src="/logo.png" alt="" width={40} height={40} className="w-10 h-10 rounded-xl" />
@@ -162,7 +162,7 @@ export default function OnboardingPage() {
         </div>
 
         {notice && (
-          <div className="mb-6 px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-700 dark:text-amber-400 text-sm">
+          <div className="mb-6 px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl text-[var(--warning-text)] text-sm">
             {notice}
           </div>
         )}
@@ -178,7 +178,7 @@ export default function OnboardingPage() {
                   setNotice('');
                   setStep('units');
                 }}
-                className="text-left bg-[var(--card)] border-2 border-[var(--border)] rounded-2xl p-5 hover:border-[var(--accent)] transition-all duration-200"
+                className="text-left glass-flat rounded-[1.75rem] p-5 hover:border-[var(--accent)] transition-all duration-200"
               >
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
@@ -211,14 +211,14 @@ export default function OnboardingPage() {
               <ArrowLeft size={16} /> Back to categories
             </button>
 
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-5 sm:p-6 mb-5">
+            <div className="glass rounded-[1.75rem] p-5 sm:p-6 mb-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2 font-semibold" style={{ fontFamily: 'var(--font-heading)' }}>
                   <Layers size={16} style={{ color: selectedCategory.color }} />
                   {selectedCategory.name}
                 </div>
                 <span className="text-sm font-medium text-[var(--muted-foreground)]">
-                  <span className={totalCredits > MAX_CREDITS ? 'text-red-500' : 'text-[var(--accent)]'}>
+                  <span className={totalCredits > MAX_CREDITS ? 'text-[var(--destructive-text)]' : 'text-[var(--accent)]'}>
                     {totalCredits}
                   </span>
                   {' / '}{MAX_CREDITS} credits · {selectedIds.length} units
@@ -263,14 +263,14 @@ export default function OnboardingPage() {
                             className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border-2 text-left transition-all duration-200 ${
                               selected
                                 ? 'border-[var(--accent)] bg-[var(--accent)]/5'
-                                : 'border-[var(--border)] bg-[var(--card)] hover:border-[var(--accent)]/50'
+                                : 'glass-flat hover:border-[var(--accent)]/50'
                             }`}
                           >
                             <div
                               className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${
                                 selected
                                   ? 'border-[var(--accent)] bg-[var(--accent)] text-white'
-                                  : 'border-[var(--border)]'
+                                  : 'border-white/20'
                               }`}
                             >
                               {selected && <CheckCircle2 size={14} />}

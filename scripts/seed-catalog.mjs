@@ -84,10 +84,10 @@ const catalog = [
   {
     name: 'Technology',
     description: 'Programming, IT, and software construction pathway',
-    color: '#4F46E5',
+    color: '#0078D4',
     units: [
       {
-        code: 'COMP101', name: 'Programming Fundamentals', credits: 3, color: '#4F46E5',
+        code: 'COMP101', name: 'Programming Fundamentals', credits: 3, color: '#0078D4',
         description: 'Variables, control flow, functions, and problem solving',
         assignments: [
           { title: 'Variables & Control Flow Lab', dueInDays: 5, type: 'assignment', priority: 'medium' },
@@ -96,7 +96,7 @@ const catalog = [
         ],
       },
       {
-        code: 'COMP102', name: 'Data Structures', credits: 3, color: '#4F46E5',
+        code: 'COMP102', name: 'Data Structures', credits: 3, color: '#0078D4',
         description: 'Lists, stacks, queues, trees, and hash tables',
         assignments: [
           { title: 'Linked Lists & Stacks Lab', dueInDays: 6, type: 'assignment', priority: 'medium' },
@@ -105,7 +105,7 @@ const catalog = [
         ],
       },
       {
-        code: 'COMP103', name: 'Software Design', credits: 2, color: '#4F46E5',
+        code: 'COMP103', name: 'Software Design', credits: 2, color: '#0078D4',
         description: 'UML, design patterns, and architectural thinking',
         assignments: [
           { title: 'UML Class Diagrams Assignment', dueInDays: 7, type: 'assignment', priority: 'medium' },
@@ -114,7 +114,7 @@ const catalog = [
         ],
       },
       {
-        code: 'COMP104', name: 'Web Development', credits: 2, color: '#4F46E5',
+        code: 'COMP104', name: 'Web Development', credits: 2, color: '#0078D4',
         description: 'HTML, CSS, JavaScript, and full-stack fundamentals',
         assignments: [
           { title: 'HTML/CSS Landing Page Lab', dueInDays: 5, type: 'assignment', priority: 'low' },
@@ -123,7 +123,7 @@ const catalog = [
         ],
       },
       {
-        code: 'COMP105', name: 'Databases', credits: 2, color: '#4F46E5',
+        code: 'COMP105', name: 'Databases', credits: 2, color: '#0078D4',
         description: 'Relational modeling, SQL, and normalization',
         assignments: [
           { title: 'SQL Queries Homework', dueInDays: 6, type: 'assignment', priority: 'medium' },
@@ -132,7 +132,7 @@ const catalog = [
         ],
       },
       {
-        code: 'COMP106', name: 'Version Control & Collaboration', credits: 1, color: '#4F46E5',
+        code: 'COMP106', name: 'Version Control & Collaboration', credits: 1, color: '#0078D4',
         description: 'Git workflows and team collaboration practices',
         assignments: [
           { title: 'Git Workflow Lab', description: 'Branching, merging, and resolving conflicts', dueInDays: 7, type: 'assignment', priority: 'low' },
@@ -140,7 +140,7 @@ const catalog = [
         ],
       },
       {
-        code: 'COMP107', name: 'Software Testing', credits: 1, color: '#4F46E5',
+        code: 'COMP107', name: 'Software Testing', credits: 1, color: '#0078D4',
         description: 'Unit tests, test plans, and quality assurance',
         assignments: [
           { title: 'Unit Testing Assignment', dueInDays: 8, type: 'assignment', priority: 'medium' },
@@ -148,7 +148,7 @@ const catalog = [
         ],
       },
       {
-        code: 'COMP108', name: 'Algorithms', credits: 3, color: '#4F46E5',
+        code: 'COMP108', name: 'Algorithms', credits: 3, color: '#0078D4',
         description: 'Sorting, searching, graphs, and complexity analysis',
         assignments: [
           { title: 'Sorting & Searching Homework', dueInDays: 6, type: 'assignment', priority: 'medium' },

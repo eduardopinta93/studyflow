@@ -4,16 +4,19 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { BookOpen, ClipboardList, Mail, Plus } from 'lucide-react';
+import { useIsAdmin } from '@/lib/use-is-admin';
 
 const actions = [
-  { label: 'New course', href: '/courses?new=1', icon: BookOpen },
-  { label: 'New assignment', href: '/assignments?new=1', icon: ClipboardList },
-  { label: 'New message', href: '/inbox?compose=1', icon: Mail },
+  { label: 'New course', href: '/courses?new=1', icon: BookOpen, adminOnly: false },
+  { label: 'New assignment', href: '/assignments?new=1', icon: ClipboardList, adminOnly: true },
+  { label: 'New message', href: '/inbox?compose=1', icon: Mail, adminOnly: true },
 ];
 
 export default function QuickAddFab() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const isAdmin = useIsAdmin();
+  const visibleActions = actions.filter((action) => !action.adminOnly || isAdmin);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -28,8 +31,8 @@ export default function QuickAddFab() {
 
       <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
         {open && (
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-lg overflow-hidden min-w-44">
-            {actions.map((action) => (
+          <div className="glass-popover rounded-2xl overflow-hidden min-w-44">
+            {visibleActions.map((action) => (
               <Link
                 key={action.href}
                 href={action.href}
@@ -47,7 +50,7 @@ export default function QuickAddFab() {
           onClick={() => setOpen(!open)}
           aria-label={open ? 'Close quick actions' : 'Quick add'}
           aria-expanded={open}
-          className="w-14 h-14 rounded-full bg-[var(--accent)] text-white shadow-lg hover:bg-[var(--accent-hover)] hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center"
+          className="glass-fab w-14 h-14 rounded-full text-white flex items-center justify-center"
         >
           <Plus
             size={24}

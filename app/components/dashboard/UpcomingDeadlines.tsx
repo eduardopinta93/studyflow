@@ -9,10 +9,10 @@ interface Deadline {
 }
 
 const typeStyles: Record<string, { label: string; dot: string }> = {
-  assignment: { label: 'Task', dot: 'bg-blue-500' },
-  exam: { label: 'Exam', dot: 'bg-red-500' },
-  project: { label: 'Project', dot: 'bg-purple-500' },
-  quiz: { label: 'Quiz', dot: 'bg-amber-500' },
+  assignment: { label: 'Task', dot: 'border-blue-500' },
+  exam: { label: 'Exam', dot: 'border-red-500' },
+  project: { label: 'Project', dot: 'border-purple-500' },
+  quiz: { label: 'Quiz', dot: 'border-amber-500' },
 };
 
 function daysLeft(date: string) {
@@ -28,7 +28,7 @@ export default function UpcomingDeadlines({ deadlines = [] }: { deadlines?: Dead
   const sorted = [...deadlines].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 h-full flex flex-col">
+    <div className="glass rounded-2xl p-6 h-full flex flex-col">
       <h2 className="text-lg font-bold text-[var(--foreground)] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>
         Coming Up
       </h2>
@@ -47,12 +47,12 @@ export default function UpcomingDeadlines({ deadlines = [] }: { deadlines?: Dead
                 key={d.id}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[var(--muted)] transition-colors"
               >
-                <span className={`w-2 h-2 rounded-full shrink-0 ${style.dot}`} />
+                <span className={`w-2 h-2 rounded-full shrink-0 border ${style.dot}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[var(--foreground)] truncate">{d.title}</p>
                   <p className="text-xs text-[var(--muted-foreground)]">{d.course}</p>
                 </div>
-                <span className={`text-xs font-medium whitespace-nowrap ${info.urgent ? 'text-[var(--destructive)]' : 'text-[var(--muted-foreground)]'}`}>
+                <span className={`text-xs font-medium whitespace-nowrap ${info.urgent ? 'text-[var(--destructive-text)]' : 'text-[var(--muted-foreground)]'}`}>
                   {info.text}
                 </span>
               </div>

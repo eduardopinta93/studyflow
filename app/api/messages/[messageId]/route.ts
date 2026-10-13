@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { auth, isAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 async function getUserId(): Promise<string | null> {
@@ -20,6 +20,10 @@ export async function PATCH(
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!(await isAdmin())) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     const { messageId } = await params;
@@ -63,6 +67,10 @@ export async function DELETE(
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!(await isAdmin())) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     const { messageId } = await params;
